@@ -1,19 +1,28 @@
+import { motion } from "framer-motion";
 import { assets } from "../assets/assets";
 
 const DealBanner = () => {
   return (
     <div className="relative flex h-full min-h-[360px] flex-col overflow-hidden rounded-2xl bg-[#0B1020] p-6 sm:p-7">
 
-      {/* Background Glow */}
-      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#4F46E5]/20 blur-3xl" />
+      {/* Background Glow — now breathing instead of static */}
+      <motion.div
+        className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#4F46E5]/20 blur-3xl"
+        animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       {/* Content */}
       <div className="relative z-10">
 
         {/* Label */}
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6366F1]">
+        <motion.span
+          className="inline-block text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6366F1]"
+          animate={{ opacity: [1, 0.6, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
           Limited Time Offer
-        </span>
+        </motion.span>
 
         {/* Heading */}
         <h3 className="mt-3 text-2xl font-bold leading-tight text-white">
@@ -36,23 +45,36 @@ const DealBanner = () => {
       </div>
 
       {/* Product Image */}
-      <div className="relative z-10 my-5 h-32 w-full overflow-hidden rounded-xl sm:h-36">
-        <img
+      <motion.div
+        className="relative z-10 my-5 h-32 w-full cursor-pointer overflow-hidden rounded-xl sm:h-36"
+        whileHover={{ scale: 1.03 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <motion.img
           src={assets.dealHeadphones}
           alt="Premium headphones"
-          className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+          className="h-full w-full object-cover"
+          animate={{ y: [0, -4, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
-      </div>
+      </motion.div>
 
       {/* CTA */}
       <div className="relative z-10 mt-auto">
 
-        <button
+        <motion.button
           type="button"
-          className="w-full rounded-lg bg-[#4F46E5] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#6366F1] hover:shadow-lg hover:shadow-[#4F46E5]/20"
+          className="w-full cursor-pointer rounded-lg bg-[#4F46E5] px-5 py-3 text-sm font-semibold text-white"
+          whileHover={{
+            scale: 1.02,
+            backgroundColor: "#6366F1",
+            boxShadow: "0 8px 20px rgba(79,70,229,0.3)",
+          }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
         >
           Shop Deals Now →
-        </button>
+        </motion.button>
 
         <p className="mt-3 text-xs text-gray-400">
           Ends Sunday, 11:59 PM

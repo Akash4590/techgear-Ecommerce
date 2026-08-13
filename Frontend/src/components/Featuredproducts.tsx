@@ -93,7 +93,7 @@ const FeaturedProducts = () => {
                 onClick={() =>
                   handleFilterChange(filter)
                 }
-                className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors sm:text-sm ${
+                className={`rounded-full cursor-pointer px-4 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                   activeFilter === filter
                     ? "bg-[#4F46E5] text-white"
                     : "bg-[#F8F9FC] text-[#6B7280] hover:text-[#111827]"

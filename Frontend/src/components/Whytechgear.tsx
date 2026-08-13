@@ -3,7 +3,7 @@ import {
   DollarSign,
   Lock,
   Headset,
-  ArrowUpRight,
+  ArrowRight,
 } from "lucide-react";
 
 const benefits = [
@@ -45,11 +45,11 @@ const WhyTechGear = () => {
         {/* Section Header */}
         <div className="mx-auto max-w-2xl text-center">
 
-          <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#4F46E5]">
+          <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#4F46E5] cursor-pointer">
             Why Choose TechGear
           </span>
 
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl lg:text-5xl cursor-pointer">
             Built Around Your{" "}
             <span className="text-[#4F46E5]">Tech Experience</span>
           </h2>
@@ -62,40 +62,39 @@ const WhyTechGear = () => {
         </div>
 
         {/* Benefits */}
-        <div className="mt-12 overflow-hidden rounded-3xl border border-[#E5E7EB] bg-[#F8F9FC]">
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-          <div className="grid grid-cols-1 divide-y divide-[#E5E7EB] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+          {benefits.map(({ icon: Icon, number, title, description }) => (
+            <div
+              key={title}
+              className="group relative flex flex-col rounded-2xl border border-[#E5E7EB] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#4F46E5]/30 hover:shadow-[0_16px_32px_-12px_rgba(79,70,229,0.18)] cursor-pointer">
 
-            {benefits.map(
-              ({ icon: Icon, title, description }, index) => (
-                <div key={title} className="group relative p-7 transition-all duration-300 hover:bg-white sm:p-8">
+              {/* Icon */}
+              <div className="mt-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#EEF2FF] transition-colors duration-300 group-hover:bg-[#4F46E5]">
+                <Icon
+                  className="h-5 w-5 text-[#4F46E5] transition-colors duration-300 group-hover:text-white"
+                  strokeWidth={2}
+                />
+              </div>
 
-                  {/* Icon */}
-                  <div className="mt-7 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-[#E5E7EB] transition-all duration-300 group-hover:-translate-y-1 group-hover:bg-[#4F46E5] group-hover:ring-[#4F46E5] group-hover:shadow-lg group-hover:shadow-[#4F46E5]/20">
+              {/* Content */}
+              <h3 className="mt-5 text-base font-bold text-[#111827]">
+                {title}
+              </h3>
 
-                    <Icon
-                      className="h-5 w-5 text-[#4F46E5] transition-colors duration-300 group-hover:text-white"
-                      strokeWidth={2}
-                    />
+              <p className="mt-2 flex-1 text-sm leading-6 text-[#6B7280]">
+                {description}
+              </p>
 
-                  </div>
+              {/* Affordance — signals the card leads somewhere, appears on hover */}
+              <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-[#4F46E5] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                Learn more
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </div>
 
-                  {/* Content */}
-                  <h3 className="mt-6 text-base font-bold text-[#111827]">
-                    {title}
-                  </h3>
+            </div>
+          ))}
 
-                  <p className="mt-2 text-sm leading-6 text-[#6B7280]">
-                    {description}
-                  </p>
-
-                  <div className="mt-6 h-0.5 w-0 rounded-full bg-[#4F46E5] transition-all duration-300 group-hover:w-10" />
-
-                </div>
-              )
-            )}
-
-          </div>
         </div>
       </div>
     </section>
