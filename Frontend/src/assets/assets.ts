@@ -19,6 +19,16 @@ import laptop from "./images/product-laptop.jfif"
 import macbook from "./images/product-macbook-air.jfif"
 import aiassistant from "./images/Ai assistant.jfif"
 import finalcta from "./images/finalcta.jfif"
+import shophero from "./images/shophero.png"
+import shopiphone from "./images/shop-iphone-15.jfif";
+import shopmacbook from "./images/shop-macbook.jfif"
+import shopsony from "./images/shop-sony.jfif"
+import shopapplewatch from "./images/shop-apple-watch.jfif"
+import shopairpods from "./images/shop-airpods.jfif"
+import shopsamsung from "./images/shop-samsung.jfif"
+import shopdell from "./images/shop-dell.jfif"
+import shoplogitech from "./images/shop-logitech.jfif"
+
 export const assets = {
 hero,
 travelBetter,
@@ -40,6 +50,15 @@ airpods,
 laptop,
 macbook,
 aiassistant,
-finalcta
+finalcta,
+shophero,
+shopiphone,
+shopmacbook,
+shopsony,
+shopapplewatch,
+shopairpods,
+shopsamsung,
+shopdell,
+shoplogitech
   
 };
