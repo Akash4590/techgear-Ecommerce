@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import ShopHero from "../components/shop/ShopHero";
 import CategoryTabs from "../components/shop/CategoryTabs";
@@ -7,10 +8,15 @@ import type { FilterState } from "../components/shop/FilterSidebar";
 import ProductGrid from "../components/shop/ProductGrid";
 import Pagination from "../components/shop/Pagination";
 import { products } from "../data/Products";
+import Footer from "../components/Footer"
 
 const PRODUCTS_PER_PAGE = 8;
 
 const ShopPage: React.FC = () => {
+  // Naya: URL se search query read karo (Navbar se aayegi)
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
   const [activeCategory, setActiveCategory] = useState("All Products");
   const [sortValue, setSortValue] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,7 +29,11 @@ const ShopPage: React.FC = () => {
     inStockOnly: false,
   });
 
-  // Category tabs + sidebar checkboxes dono combine karke filter
+  // Naya: jab bhi search query badle, page 1 pe reset karo
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesTabCategory =
@@ -36,15 +46,21 @@ const ShopPage: React.FC = () => {
       const matchesRating = p.rating >= filters.minRating;
       const matchesStock = !filters.inStockOnly || p.inStock !== false;
 
+      // Naya: product name search query se match kare (case-insensitive)
+      const matchesSearch =
+        searchQuery.trim() === "" ||
+        p.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+
       return (
         matchesTabCategory &&
         matchesSidebarCategory &&
         matchesPrice &&
         matchesRating &&
-        matchesStock
+        matchesStock &&
+        matchesSearch
       );
     });
-  }, [activeCategory, filters]);
+  }, [activeCategory, filters, searchQuery]);
 
   // Sort logic
   const sortedProducts = useMemo(() => {
@@ -63,13 +79,11 @@ const ShopPage: React.FC = () => {
 
   const totalPages = Math.max(1, Math.ceil(sortedProducts.length / PRODUCTS_PER_PAGE));
 
-  // Current page ke products nikaalo
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
     return sortedProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
   }, [sortedProducts, currentPage]);
 
-  // Naya: har category ka live count (sidebar counts ke liye)
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { "All Products": products.length };
     products.forEach((p) => {
@@ -80,10 +94,9 @@ const ShopPage: React.FC = () => {
 
   const handleCategoryChange = (cat: string) => {
     setActiveCategory(cat);
-    setCurrentPage(1); // category badalne pe page 1 pe wapas
+    setCurrentPage(1);
   };
 
-  // Naya: sidebar filter change handler
   const handleFilterChange = (updated: FilterState) => {
     setFilters(updated);
     setCurrentPage(1);
@@ -106,15 +119,25 @@ const ShopPage: React.FC = () => {
           onFilterChange={handleFilterChange}
           categoryCounts={categoryCounts}
         />
-        <ProductGrid
-          products={paginatedProducts}
-          totalCount={sortedProducts.length}
-          sortValue={sortValue}
-          onSortChange={setSortValue}
-        />
+
+        {/* Naya: agar search active hai to result count ke sath dikhao */}
+        <div className="flex-1">
+          {searchQuery && (
+            <p className="text-sm text-gray-500 mb-3">
+              Showing results for <span className="font-semibold text-[#0B0B14]">"{searchQuery}"</span>
+            </p>
+          )}
+          <ProductGrid
+            products={paginatedProducts}
+            totalCount={sortedProducts.length}
+            sortValue={sortValue}
+            onSortChange={setSortValue}
+          />
+        </div>
       </div>
 
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      <Footer/>
     </div>
   );
 };

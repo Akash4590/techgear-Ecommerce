@@ -1,0 +1,17 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
+
+const CartBreadcrumb: React.FC = () => {
+  return (
+    <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+      <Link to="/" className="hover:text-[#4F46E5] transition-colors">
+        Home
+      </Link>
+      <ChevronRight size={14} />
+      <span className="text-[#0B0B14] font-medium">Cart</span>
+    </nav>
+  );
+};
+
+export default CartBreadcrumb;
