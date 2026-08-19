@@ -13,15 +13,13 @@ import Footer from "../components/Footer"
 const PRODUCTS_PER_PAGE = 8;
 
 const ShopPage: React.FC = () => {
-  // Naya: URL se search query read karo (Navbar se aayegi)
+
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
-
   const [activeCategory, setActiveCategory] = useState("All Products");
   const [sortValue, setSortValue] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Naya: FilterSidebar ke liye state
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     maxPrice: 2000,
@@ -29,7 +27,7 @@ const ShopPage: React.FC = () => {
     inStockOnly: false,
   });
 
-  // Naya: jab bhi search query badle, page 1 pe reset karo
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -46,7 +44,7 @@ const ShopPage: React.FC = () => {
       const matchesRating = p.rating >= filters.minRating;
       const matchesStock = !filters.inStockOnly || p.inStock !== false;
 
-      // Naya: product name search query se match kare (case-insensitive)
+    
       const matchesSearch =
         searchQuery.trim() === "" ||
         p.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
@@ -62,7 +60,7 @@ const ShopPage: React.FC = () => {
     });
   }, [activeCategory, filters, searchQuery]);
 
-  // Sort logic
+
   const sortedProducts = useMemo(() => {
     const list = [...filteredProducts];
     switch (sortValue) {
@@ -111,28 +109,26 @@ const ShopPage: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Navbar />
       <ShopHero />
-      <CategoryTabs activeCategory={activeCategory} onCategoryChange={handleCategoryChange} />
+  <CategoryTabs activeCategory={activeCategory} onCategoryChange={handleCategoryChange} />
 
       <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-6 flex flex-col lg:flex-row gap-6">
         <FilterSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          categoryCounts={categoryCounts}
-        />
+          categoryCounts={categoryCounts}/>
 
-        {/* Naya: agar search active hai to result count ke sath dikhao */}
+      
         <div className="flex-1">
           {searchQuery && (
             <p className="text-sm text-gray-500 mb-3">
-              Showing results for <span className="font-semibold text-[#0B0B14]">"{searchQuery}"</span>
+            Showing results for <span className="font-semibold text-[#0B0B14]">"{searchQuery}"</span>
             </p>
           )}
           <ProductGrid
             products={paginatedProducts}
             totalCount={sortedProducts.length}
             sortValue={sortValue}
-            onSortChange={setSortValue}
-          />
+            onSortChange={setSortValue} />
         </div>
       </div>
 
