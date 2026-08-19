@@ -7,16 +7,45 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface ShippingInfo {
+  firstName: string;
+  lastName: string;
+  address: string;
+  apartment: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  phone: string;
+  email: string;
+}
+
+export interface Order {
+  orderId: string;
+  orderDate: string;
+  paymentMethod: string;
+  deliveryMethod: "standard" | "express";
+  shipping: ShippingInfo;
+  items: CartItem[];
+  subtotal: number;
+  discount: number;
+  shippingCost: number;
+  total: number;
+}
+
 interface ShopContextType {
   cartItems: CartItem[];
   wishlistItems: Product[];
+  orders: Order[];
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, delta: number) => void;
+  clearCart: () => void;
   addToWishlist: (product: Product) => void;
   removeFromWishlist: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
   isInCart: (productId: string) => boolean;
+  addOrder: (order: Order) => void;
   cartCount: number;
   wishlistCount: number;
 }
@@ -25,6 +54,7 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = "techgear_cart";
 const WISHLIST_STORAGE_KEY = "techgear_wishlist";
+const ORDERS_STORAGE_KEY = "techgear_orders";
 
 const loadFromStorage = <T,>(key: string, fallback: T): T => {
   try {
@@ -42,6 +72,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [wishlistItems, setWishlistItems] = useState<Product[]>(() =>
     loadFromStorage<Product[]>(WISHLIST_STORAGE_KEY, [])
   );
+  const [orders, setOrders] = useState<Order[]>(() =>
+    loadFromStorage<Order[]>(ORDERS_STORAGE_KEY, [])
+  );
 
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -50,6 +83,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistItems));
   }, [wishlistItems]);
+
+  useEffect(() => {
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+  }, [orders]);
 
   const addToCart = (product: Product) => {
     setCartItems((prev) => {
@@ -81,6 +118,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const addToWishlist = (product: Product) => {
     setWishlistItems((prev) => {
       const exists = prev.find((item) => item.id === product.id);
@@ -99,6 +140,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isInCart = (productId: string) =>
     cartItems.some((item) => item.product.id === productId);
 
+  const addOrder = (order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+  };
+
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -106,13 +151,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         cartItems,
         wishlistItems,
+        orders,
         addToCart,
         removeFromCart,
         updateCartQuantity,
+        clearCart,
         addToWishlist,
         removeFromWishlist,
         isInWishlist,
         isInCart,
+        addOrder,
         cartCount,
         wishlistCount: wishlistItems.length,
       }}

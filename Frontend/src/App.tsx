@@ -6,6 +6,8 @@ import WishlistPage from "./pages/WishlistPage";
 import CartPage from "./pages/CartPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Checkout from "./pages/Checkout";
+import OrderSuccessPage from "./pages/Ordersuccesspage";
+import Orderspage from "./pages/Orderspage"
 const App = () => {
   return (
     <Routes>
@@ -15,6 +17,8 @@ const App = () => {
       <Route path="/wishlist" element={<WishlistPage />} />
       <Route path="/product/:id" element={<ProductDetailsPage />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/ordersuccess" element={<OrderSuccessPage />} />
+      <Route path="/order" element={<Orderspage />} />
     </Routes>
   );
 };

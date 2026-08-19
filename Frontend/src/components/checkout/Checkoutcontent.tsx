@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Pencil,
   CheckCircle2,
@@ -37,7 +38,8 @@ const stateOptionsByCountry: Record<string, string[]> = {
 };
 
 const CheckoutContent = () => {
-  const { cartItems } = useShop();
+  const { cartItems, clearCart, addOrder } = useShop();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -58,6 +60,69 @@ const CheckoutContent = () => {
   const handleCountryChange = (value: string) => {
     setCountry(value);
     setState("");
+  };
+
+  const paymentMethodLabels: Record<PaymentMethod, string> = {
+    card: "Credit / Debit Card",
+    paypal: "PayPal",
+    applepay: "Apple Pay",
+    googlepay: "Google Pay",
+  };
+
+  const handlePlaceOrder = () => {
+    if (
+      !email ||
+      !firstName ||
+      !lastName ||
+      !address ||
+      !city ||
+      !state ||
+      !zip ||
+      !country
+    ) {
+      alert("Please fill in all required fields before placing your order.");
+      return;
+    }
+
+    const orderId = `TG-${new Date().getFullYear()}-${Math.floor(
+      10000 + Math.random() * 90000
+    )}`;
+
+    const orderDate = new Date().toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    const orderData = {
+      orderId,
+      orderDate,
+      paymentMethod: paymentMethodLabels[paymentMethod],
+      deliveryMethod,
+      shipping: {
+        firstName,
+        lastName,
+        address,
+        apartment,
+        city,
+        state,
+        zip,
+        country,
+        phone,
+        email,
+      },
+      items: cartItems,
+      subtotal,
+      discount: appliedDiscount,
+      shippingCost,
+      total,
+    };
+
+    addOrder(orderData);
+    navigate("/ordersuccess", { state: orderData });
+    clearCart();
   };
 
   const discount = 50;
@@ -87,7 +152,7 @@ const CheckoutContent = () => {
             </div>
             <button
               type="button"
-              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA]"
+              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer"
             >
               <Pencil size={14} />
               Edit
@@ -148,7 +213,7 @@ const CheckoutContent = () => {
             </div>
             <button
               type="button"
-              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA]"
+              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer"
             >
               <Pencil size={14} />
               Edit
@@ -230,7 +295,7 @@ const CheckoutContent = () => {
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   disabled={!country}
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-[#0B0B14] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 disabled:bg-gray-50 disabled:text-gray-400"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-[#0B0B14] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 disabled:bg-gray-50 disabled:text-gray-400 cursor-pointer"
                 >
                   <option value="" disabled>
                     {country ? "Select State" : "Select Country first"}
@@ -264,7 +329,7 @@ const CheckoutContent = () => {
               <select
                 value={country}
                 onChange={(e) => handleCountryChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-[#0B0B14] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-[#0B0B14] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 cursor-pointer"
               >
                 <option value="" disabled>
                   Select Country
@@ -289,10 +354,8 @@ const CheckoutContent = () => {
                 Delivery Method
               </h2>
             </div>
-            <button
-              type="button"
-              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA]"
-            >
+            <button type="button"
+    className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
               <Pencil size={14} />
               Edit
             </button>
@@ -302,7 +365,7 @@ const CheckoutContent = () => {
             <button
               type="button"
               onClick={() => setDeliveryMethod("standard")}
-              className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
+              className={`cursor-pointer flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
                 deliveryMethod === "standard"
                   ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
                   : "border-gray-200 hover:border-gray-300"
@@ -336,7 +399,7 @@ const CheckoutContent = () => {
             <button
               type="button"
               onClick={() => setDeliveryMethod("express")}
-              className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
+              className={` cursor-pointer flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
                 deliveryMethod === "express"
                   ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
                   : "border-gray-200 hover:border-gray-300"
@@ -354,7 +417,7 @@ const CheckoutContent = () => {
                 )}
               </span>
 
-              <Rocket size={18} className="text-gray-500 mt-0.5" />
+               <Truck size={18} className="text-gray-500 mt-0.5" />
 
               <div>
                 <p className="text-sm font-semibold text-[#0B0B14]">
@@ -373,7 +436,7 @@ const CheckoutContent = () => {
 
         {/* Payment Method */}
         <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-5 cursor-pointer">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-semibold text-white">
               4
             </span>
@@ -392,7 +455,7 @@ const CheckoutContent = () => {
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 cursor-pointer">
                 <span
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
                     paymentMethod === "card"
@@ -409,7 +472,7 @@ const CheckoutContent = () => {
                   Credit / Debit Card
                 </span>
               </div>
-              <div className="flex items-center gap-2 pl-6">
+              <div className="flex items-center gap-2 pl-6 cursor-pointer">
                 <div className="rounded border border-gray-200 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                   VISA
                 </div>
@@ -434,18 +497,16 @@ const CheckoutContent = () => {
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <span
-                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+        <span className={`flex h-4 w-4 shrink-0 items-center justify-center cursor pointer rounded-full border-2 ${
                   paymentMethod === "paypal"
                     ? "border-[#4F46E5]"
                     : "border-gray-300"
-                }`}
-              >
+                }`}>
                 {paymentMethod === "paypal" && (
                   <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
                 )}
               </span>
-              <span className="text-sm font-semibold text-blue-800">
+              <span className="text-sm font-semibold text-blue-800 cursor-pointer">
                 PayPal
               </span>
             </button>
@@ -453,7 +514,7 @@ const CheckoutContent = () => {
             <button
               type="button"
               onClick={() => setPaymentMethod("applepay")}
-              className={`flex items-center gap-2 rounded-lg border p-4 transition-colors ${
+              className={`flex items-center gap-2 rounded-lg border p-4  transition-colors ${
                 paymentMethod === "applepay"
                   ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
                   : "border-gray-200 hover:border-gray-300"
@@ -470,8 +531,8 @@ const CheckoutContent = () => {
                   <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
                 )}
               </span>
-              <span className="text-sm font-semibold text-[#0B0B14]">
-                 Pay
+              <span className="text-sm font-semibold text-[#0B0B14] cursor-pointer">
+                 Google Pay
               </span>
             </button>
           </div>
@@ -483,7 +544,8 @@ const CheckoutContent = () => {
 
           <button
             type="button"
-            className="mt-5 flex w-full items-center justify-between rounded-lg bg-[#4F46E5] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA]"
+            onClick={handlePlaceOrder}
+            className="mt-5 flex w-full items-center justify-between rounded-lg bg-[#4F46E5] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] cursor-pointer"
           >
             <span className="flex items-center gap-2">
               <Lock size={16} />
@@ -509,8 +571,7 @@ const CheckoutContent = () => {
             </p>
             <button
               type="button"
-              className="text-sm font-medium text-[#4F46E5] hover:text-[#4338CA]"
-            >
+            className="text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
               Edit Cart
             </button>
           </div>

@@ -67,6 +67,7 @@ import shopboard1 from "./images/shop-logitech-master.jfif"
 import shopboard2 from "./images/shop-logitech.jfif"
 import shopboard3 from "./images/shop-keychron.jfif"
 import shopboard4 from "./images/shop-anker.jfif"
+import ordersucces from "./images/ordersuccess.png"
 export const assets = {
 hero,
 travelBetter,
@@ -136,6 +137,7 @@ shopboard,
 shopboard1,
 shopboard2,
 shopboard3,
-shopboard4
+shopboard4,
+ordersucces
   
 };
