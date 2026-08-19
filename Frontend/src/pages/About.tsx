@@ -11,11 +11,10 @@ import {
   Gem,
   Lightbulb,
   Globe,
-  Link2,
-  AtSign,
   Mail,
   ArrowRight,
 } from "lucide-react";
+import { FaLinkedinIn, FaFacebookF } from "react-icons/fa";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { assets } from "../assets/assets";
@@ -368,14 +367,14 @@ const AboutPage = () => {
                       aria-label={`${member.name} LinkedIn`}
                       className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-all hover:bg-[#4F46E5] hover:text-white"
                     >
-                      <Link2 size={13} />
+                      <FaLinkedinIn size={13} />
                     </button>
                     <button
                       type="button"
                       aria-label={`${member.name} Twitter`}
                       className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-all hover:bg-[#4F46E5] hover:text-white"
                     >
-                      <AtSign size={13} />
+                      <FaFacebookF size={13} />
                     </button>
                     <button
                       type="button"

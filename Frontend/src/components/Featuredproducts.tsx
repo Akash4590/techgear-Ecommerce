@@ -117,7 +117,7 @@ const FeaturedProducts = () => {
             aria-label="Previous products"
             className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-[#F8F9FC] hover:text-[#111827] disabled:cursor-not-allowed disabled:opacity-30 sm:flex"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 cursor-pointer" />
           </button>
 
           {/* Product Grid */}
@@ -144,7 +144,7 @@ const FeaturedProducts = () => {
             aria-label="Next products"
             className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-[#F8F9FC] hover:text-[#111827] disabled:cursor-not-allowed disabled:opacity-30 sm:flex"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 cursor-pointer" />
           </button>
 
         </div>

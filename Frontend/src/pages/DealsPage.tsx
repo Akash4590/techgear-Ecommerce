@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { products } from "../data/Products";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -29,6 +31,16 @@ const DealsPage = () => {
       <Navbar />
 
       <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-8">
+
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+          <Link to="/" className="hover:text-[#4F46E5] transition-colors">
+            Home
+          </Link>
+          <ChevronRight size={14} />
+          <span className="text-[#0B0B14] font-medium">Deals</span>
+        </nav>
+
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#0B0B14] mb-1">Today's Deals</h1>
           <p className="text-sm text-gray-500">

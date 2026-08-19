@@ -91,8 +91,7 @@ const OrdersContent = () => {
                   <button
                     type="button"
                     onClick={() => toggleExpand(order.orderId)}
-                    className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA]"
-                  >
+                    className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
                     {isExpanded ? "Hide Details" : "View Details"}
                     {isExpanded ? (
                       <ChevronUp size={16} />
