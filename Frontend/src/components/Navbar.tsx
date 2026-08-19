@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Heart, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
 import { useShop } from "../context/ShopContext";
+import { productCategoryFilters } from "../data/Products";
 
 type NavLink = { label: string; hasDropdown: boolean; path: string };
 
 const navLinks: NavLink[] = [
   { label: "Home", hasDropdown: false, path: "/" },
-  { label: "Shop", hasDropdown: true, path: "/shop" },
+  { label: "Shop", hasDropdown: false, path: "/shop" },
   { label: "Categories", hasDropdown: true, path: "/shop" },
   { label: "Deals", hasDropdown: false, path: "/deals" },
   { label: "About Us", hasDropdown: false, path: "/about" },
@@ -24,8 +25,10 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const { cartCount, wishlistCount } = useShop();
   const navigate = useNavigate();
+  const categoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -34,12 +37,34 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Dropdown ke bahar click karne pe band ho jaye
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Search submit hone pe Shop page pe query param ke sath navigate karo
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setIsMobileMenuOpen(false);
+    }
+  };
+
+  // Naya: category click hone pe Shop page pe filter ke sath navigate karo
+  const handleCategoryClick = (category: string) => {
+    setIsCategoryOpen(false);
+    setIsMobileMenuOpen(false);
+    if (category === "All Products") {
+      navigate("/shop");
+    } else {
+      navigate(`/shop?category=${encodeURIComponent(category)}`);
     }
   };
 
@@ -65,22 +90,62 @@ const Navbar = () => {
 
         {/* Desktop nav links */}
         <nav className="hidden items-center gap-8 lg:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              to={link.path}
-              className="group relative flex items-center gap-1 text-sm font-medium text-[#111827] transition-colors hover:text-[#4F46E5]"
-            >
-              {link.label}
-              {link.hasDropdown && (
-                <ChevronDown
-                  className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180"
-                  strokeWidth={2}
-                />
-              )}
-              <span className="absolute -bottom-1.5 left-0 h-[1.5px] w-0 bg-[#4F46E5] transition-all duration-200 ease-out group-hover:w-full" />
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            // Naya: Categories ke liye functional dropdown
+            if (link.hasDropdown) {
+              return (
+                <div key={link.label} ref={categoryRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryOpen((prev) => !prev)}
+                    className="group relative flex items-center gap-1 text-sm font-medium text-[#111827] transition-colors hover:text-[#4F46E5]"
+                  >
+                    {link.label}
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${
+                        isCategoryOpen ? "rotate-180" : ""
+                      }`}
+                      strokeWidth={2}
+                    />
+                    <span className="absolute -bottom-1.5 left-0 h-[1.5px] w-0 bg-[#4F46E5] transition-all duration-200 ease-out group-hover:w-full" />
+                  </button>
+
+                  <AnimatePresence>
+                    {isCategoryOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-0 top-full mt-3 w-52 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+                      >
+                        {productCategoryFilters.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => handleCategoryClick(cat)}
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-[#111827] transition-colors hover:bg-[#F8F9FC] hover:text-[#4F46E5]"
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={link.label}
+                to={link.path}
+                className="group relative flex items-center gap-1 text-sm font-medium text-[#111827] transition-colors hover:text-[#4F46E5]"
+              >
+                {link.label}
+                <span className="absolute -bottom-1.5 left-0 h-[1.5px] w-0 bg-[#4F46E5] transition-all duration-200 ease-out group-hover:w-full" />
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Search bar - desktop */}
@@ -242,24 +307,65 @@ const Navbar = () => {
 
               {/* Mobile Nav */}
               <nav className="flex flex-col gap-1">
-                {navLinks.map((link, i) => (
-                  <motion.div
-                    key={link.label}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04, duration: 0.2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Link
-                      to={link.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm font-medium text-[#111827] hover:bg-[#F8F9FC]"
+                {navLinks.map((link, i) => {
+                  // Naya: Mobile Categories collapsible list
+                  if (link.hasDropdown) {
+                    return (
+                      <div key={link.label}>
+                        <button
+                          onClick={() => setIsCategoryOpen((prev) => !prev)}
+                          className="flex w-full items-center justify-between rounded-lg px-2 py-3 text-left text-sm font-medium text-[#111827] hover:bg-[#F8F9FC]"
+                        >
+                          {link.label}
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${
+                              isCategoryOpen ? "rotate-180" : ""
+                            }`}
+                            strokeWidth={2}
+                          />
+                        </button>
+                        <AnimatePresence>
+                          {isCategoryOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden pl-4"
+                            >
+                              {productCategoryFilters.map((cat) => (
+                                <button
+                                  key={cat}
+                                  onClick={() => handleCategoryClick(cat)}
+                                  className="block w-full rounded-lg px-2 py-2.5 text-left text-sm text-gray-600 hover:bg-[#F8F9FC] hover:text-[#4F46E5]"
+                                >
+                                  {cat}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <motion.div
+                      key={link.label}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04, duration: 0.2 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      {link.label}
-                      {link.hasDropdown && <ChevronDown className="h-4 w-4" strokeWidth={2} />}
-                    </Link>
-                  </motion.div>
-                ))}
+                      <Link
+                        to={link.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm font-medium text-[#111827] hover:bg-[#F8F9FC]"
+                      >
+                        {link.label}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
               </nav>
 
               {/* Wishlist */}

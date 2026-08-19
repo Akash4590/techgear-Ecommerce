@@ -5,6 +5,7 @@ import workSmarter from "./images/workSmarter.jfif"
 import avatar1 from "./images/avatar-1.jfif"
 import avatar2 from "./images/avatar-2.jfif"
 import avatar3 from "./images/avatar-3.jfif"
+import avatar4 from "./images/avatar-4.avif"
 import categorySmartphones from "./images/category-smartphones.jfif";
 import categoryLaptops from "./images/category-laptops.jfif";
 import categoryAudio from "./images/category-audio.jfif";
@@ -68,6 +69,8 @@ import shopboard2 from "./images/shop-logitech.jfif"
 import shopboard3 from "./images/shop-keychron.jfif"
 import shopboard4 from "./images/shop-anker.jfif"
 import ordersucces from "./images/ordersuccess.png"
+import abouthero from "./images/abouthero.png"
+import aboutmission from "./images/aboutmission.png"
 export const assets = {
 hero,
 travelBetter,
@@ -76,6 +79,7 @@ workSmarter,
 avatar1,
 avatar2,
 avatar3,
+avatar4,
 categorySmartphones,
 categoryLaptops,
 categoryAudio,
@@ -138,6 +142,8 @@ shopboard1,
 shopboard2,
 shopboard3,
 shopboard4,
-ordersucces
+ordersucces,
+abouthero,
+aboutmission
   
 };

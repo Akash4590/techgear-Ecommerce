@@ -26,6 +26,8 @@ export interface Product {
   storageOptions?: string[];
   description?: string;
   inStock?: boolean;
+  isDeal?: boolean;          // Naya
+  discountPercent?: number;  // Naya, e.g. 20 (matlab 20% off)
 }
 
 export const products: Product[] = [
@@ -201,6 +203,8 @@ export const products: Product[] = [
     rating: 4.9,
     reviewCount: 89,
     imageAlt: "MacBook Air M3",
+     isDeal: true,           
+  discountPercent: 15,    
     image: assets.shopmacbook,
     storageOptions: ["256GB", "512GB", "1TB"],
     colors: [
@@ -221,6 +225,8 @@ export const products: Product[] = [
     reviewCount: 56,
     imageAlt: "Sony WH-1000XM5 Headphones",
     image: assets.shopsony,
+     isDeal: true,          
+  discountPercent: 17,    
     colors: [
       { name: "Black", hex: "#1A1A1A" },
       { name: "Silver", hex: "#D8D9D6" },
@@ -238,6 +244,8 @@ export const products: Product[] = [
     reviewCount: 72,
     imageAlt: "Apple Watch Series 9",
     image: assets.shopapplewatch,
+      isDeal: true,          
+  discountPercent: 20,    
     colors: [
       { name: "Midnight", hex: "#1E2129" },
       { name: "Starlight", hex: "#F0E5D3" },
@@ -256,6 +264,8 @@ export const products: Product[] = [
     reviewCount: 95,
     imageAlt: "AirPods Pro 2nd Generation",
     image: assets.shopairpods,
+      isDeal: true,          
+  discountPercent: 20,    
     colors: [{ name: "White", hex: "#FFFFFF" }],
     description:
       "AirPods Pro (2nd generation) offer richer audio, smarter noise cancellation, and a redesigned charging case with Find My support — the ultimate everyday wireless earbuds.",
@@ -286,6 +296,8 @@ export const products: Product[] = [
     price: 999,
     rating: 4.5,
     reviewCount: 42,
+      isDeal: true,          
+  discountPercent: 12,    
     imageAlt: "Dell XPS 13 Plus",
     image: assets.shopdell,
     storageOptions: ["512GB", "1TB"],
@@ -358,6 +370,8 @@ export const products: Product[] = [
     price: 699,
     rating: 4.5,
     reviewCount: 87,
+      isDeal: true,          
+  discountPercent: 10,    
     imageAlt: "iPhone 14",
     image: assets.shopiphone,
     storageOptions: ["128GB", "256GB", "512GB"],
@@ -378,6 +392,8 @@ export const products: Product[] = [
     price: 699,
     rating: 4.6,
     reviewCount: 123,
+      isDeal: true,          
+  discountPercent: 15,    
     imageAlt: "Samsung Galaxy S23",
     image: assets.shopsamsungs,
     storageOptions: ["128GB", "256GB"],
@@ -397,6 +413,8 @@ export const products: Product[] = [
     price: 899,
     rating: 4.7,
     reviewCount: 109,
+      isDeal: true,          
+  discountPercent: 11,    
     imageAlt: "Samsung Galaxy S23 Ultra",
     image: assets.shopsamsung1,
     storageOptions: ["256GB", "512GB", "1TB"],
@@ -416,6 +434,8 @@ export const products: Product[] = [
     price: 449,
     rating: 4.5,
     reviewCount: 76,
+      isDeal: true,          
+  discountPercent: 12,    
     imageAlt: "Samsung Galaxy A55",
     image: assets.shopsamsung,
     storageOptions: ["128GB", "256GB"],
@@ -452,6 +472,8 @@ export const products: Product[] = [
     price: 699,
     rating: 4.6,
     reviewCount: 84,
+      isDeal: true,          
+  discountPercent: 14,    
     imageAlt: "Google Pixel 8",
     image: assets.shopgooglepixel,
     storageOptions: ["128GB", "256GB"],
@@ -470,6 +492,8 @@ export const products: Product[] = [
     price: 499,
     rating: 4.4,
     reviewCount: 63,
+      isDeal: true,          
+  discountPercent: 8,    
     imageAlt: "Google Pixel 7a",
     image: assets.shopiphone16,
     storageOptions: ["128GB"],
@@ -508,6 +532,8 @@ export const products: Product[] = [
     reviewCount: 58,
     imageAlt: "OnePlus 12R",
     image: assets.shopxiaomi,
+      isDeal: true,          
+  discountPercent: 20,    
     storageOptions: ["128GB", "256GB"],
     colors: [
       { name: "Black", hex: "#1A1A1A" },
@@ -524,6 +550,8 @@ export const products: Product[] = [
     price: 999,
     rating: 4.5,
     reviewCount: 67,
+      isDeal: true,          
+  discountPercent: 25,    
     imageAlt: "Samsung Galaxy Z Flip 5",
     image: assets.samsunggalaxy,
     storageOptions: ["256GB", "512GB"],
@@ -544,6 +572,8 @@ export const products: Product[] = [
     category: "Laptops",
     price: 1599,
     rating: 4.9,
+      isDeal: true,          
+  discountPercent: 17,    
     reviewCount: 112,
     imageAlt: "MacBook Pro 14",
     image: assets.shopmacbookpro,
@@ -562,6 +592,8 @@ export const products: Product[] = [
     price: 2499,
     rating: 4.8,
     reviewCount: 94,
+      isDeal: true,          
+  discountPercent: 10,    
     imageAlt: "MacBook Pro 16",
     image: assets.shopmacbook1,
     storageOptions: ["512GB", "1TB", "2TB"],
@@ -598,6 +630,8 @@ export const products: Product[] = [
     rating: 4.7,
     reviewCount: 84,
     imageAlt: "Dell XPS 15",
+      isDeal: true,          
+  discountPercent: 30,    
     image: assets.shopdell,
     storageOptions: ["512GB", "1TB", "2TB"],
     colors: [
@@ -614,6 +648,8 @@ export const products: Product[] = [
     price: 849,
     rating: 4.5,
     reviewCount: 72,
+      isDeal: true,          
+  discountPercent: 10,    
     imageAlt: "Dell Inspiron 16",
     image: assets.shophp,
     storageOptions: ["512GB", "1TB"],
@@ -662,6 +698,8 @@ export const products: Product[] = [
     price: 1799,
     rating: 4.8,
     reviewCount: 53,
+      isDeal: true,          
+  discountPercent: 26,    
     imageAlt: "ASUS ROG Zephyrus",
     image: assets.shopmacbook1,
     storageOptions: ["256GB", "512GB"],
@@ -714,6 +752,8 @@ export const products: Product[] = [
     price: 429,
     rating: 4.8,
     reviewCount: 88,
+      isDeal: true,          
+  discountPercent: 5,    
     imageAlt: "Bose QuietComfort Ultra",
     image: assets.shopairpods,
     colors: [
@@ -731,6 +771,8 @@ export const products: Product[] = [
     price: 349,
     rating: 4.7,
     reviewCount: 74,
+      isDeal: true,          
+  discountPercent: 4,    
     imageAlt: "Bose QuietComfort",
     image: assets.shopairpods1,
     colors: [
@@ -747,6 +789,8 @@ export const products: Product[] = [
     price: 179,
     rating: 4.6,
     reviewCount: 121,
+      isDeal: true,          
+  discountPercent: 3,    
     imageAlt: "AirPods 3rd Generation",
     image: assets.shopairpods2,
     colors: [{ name: "White", hex: "#FFFFFF" }],
@@ -760,6 +804,8 @@ export const products: Product[] = [
     price: 549,
     rating: 4.7,
     reviewCount: 82,
+      isDeal: true,          
+  discountPercent: 2,    
     imageAlt: "AirPods Max",
     image: assets.shopairpods3,
     colors: [
@@ -882,6 +928,8 @@ export const products: Product[] = [
     price: 99,
     rating: 4.6,
     reviewCount: 74,
+      isDeal: true,          
+  discountPercent: 6,    
     imageAlt: "Apple Magic Keyboard",
     image: assets.shopboard,
     colors: [
@@ -914,6 +962,8 @@ export const products: Product[] = [
     price: 99,
     rating: 4.8,
     reviewCount: 91,
+      isDeal: true,          
+  discountPercent: 7,    
     imageAlt: "Logitech MX Master 3S",
     image: assets.shopboard2,
     colors: [
@@ -930,6 +980,8 @@ export const products: Product[] = [
     price: 79,
     rating: 4.4,
     reviewCount: 62,
+      isDeal: true,          
+  discountPercent: 10,    
     imageAlt: "Apple Magic Mouse",
     image: assets.shopboard3,
     colors: [
@@ -946,6 +998,8 @@ export const products: Product[] = [
     price: 49,
     rating: 4.5,
     reviewCount: 88,
+      isDeal: true,          
+  discountPercent: 5,    
     imageAlt: "USB-C Hub",
     image: assets.shopboard4,
     colors: [
@@ -962,6 +1016,8 @@ export const products: Product[] = [
     price: 39,
     rating: 4.7,
     reviewCount: 103,
+      isDeal: true,          
+  discountPercent: 4,    
     imageAlt: "Anker USB-C Charger",
     image: assets.shoplogitech,
     colors: [
@@ -978,6 +1034,7 @@ export const products: Product[] = [
     price: 39,
     rating: 4.6,
     reviewCount: 96,
+
     imageAlt: "MagSafe Charger",
     image: assets.shopboard3,
     colors: [{ name: "White", hex: "#F5F5F5" }],
@@ -1055,6 +1112,8 @@ export const products: Product[] = [
     price: 799,
     rating: 4.8,
     reviewCount: 72,
+      isDeal: true,          
+  discountPercent: 5,    
     imageAlt: "Apple Watch Ultra 2",
     image: assets.shopwatch1,
     colors: [
@@ -1071,6 +1130,8 @@ export const products: Product[] = [
     price: 329,
     rating: 4.6,
     reviewCount: 68,
+      isDeal: true,          
+  discountPercent: 6,    
     imageAlt: "Samsung Galaxy Watch 7",
     image: assets.shopwatch2,
     colors: [
@@ -1088,6 +1149,8 @@ export const products: Product[] = [
     price: 249,
     rating: 4.5,
     reviewCount: 59,
+      isDeal: true,          
+  discountPercent: 8,    
     imageAlt: "Samsung Galaxy Watch 6",
     image: assets.shopwatch3,
     colors: [
@@ -1105,6 +1168,8 @@ export const products: Product[] = [
     price: 299,
     rating: 4.5,
     reviewCount: 61,
+      isDeal: true,         
+  discountPercent: 7,    
     imageAlt: "Google Pixel Watch 2",
     image: assets.shopwatch4,
     colors: [
@@ -1122,6 +1187,8 @@ export const products: Product[] = [
     price: 449,
     rating: 4.7,
     reviewCount: 48,
+      isDeal: true,          
+  discountPercent: 10,    
     imageAlt: "Garmin Venu 3",
     image: assets.shopwatch2,
     colors: [
@@ -1139,6 +1206,8 @@ export const products: Product[] = [
     price: 249,
     rating: 4.4,
     reviewCount: 57,
+      isDeal: true,          
+  discountPercent: 12,    
     imageAlt: "Fitbit Sense 2",
     image: assets.shopwatch1,
     colors: [
@@ -1156,6 +1225,8 @@ export const products: Product[] = [
     price: 199,
     rating: 4.5,
     reviewCount: 43,
+      isDeal: true,          
+  discountPercent: 9,    
     imageAlt: "Amazfit GTR 4",
     image: assets.shopwatch,
     colors: [

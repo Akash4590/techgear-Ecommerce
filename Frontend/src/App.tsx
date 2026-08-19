@@ -8,6 +8,8 @@ import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Checkout from "./pages/Checkout";
 import OrderSuccessPage from "./pages/Ordersuccesspage";
 import Orderspage from "./pages/Orderspage"
+import DealsPage from "./pages/DealsPage";
+import AboutPage from "./pages/About";
 const App = () => {
   return (
     <Routes>
@@ -19,6 +21,8 @@ const App = () => {
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/ordersuccess" element={<OrderSuccessPage />} />
       <Route path="/order" element={<Orderspage />} />
+      <Route path="/deals" element={<DealsPage />} />
+      <Route path="/about" element={<AboutPage />} />
     </Routes>
   );
 };

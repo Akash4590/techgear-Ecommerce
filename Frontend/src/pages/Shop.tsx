@@ -16,7 +16,9 @@ const ShopPage: React.FC = () => {
 
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
-  const [activeCategory, setActiveCategory] = useState("All Products");
+  const urlCategory = searchParams.get("category"); // Naya: Navbar dropdown se aane wali category
+
+  const [activeCategory, setActiveCategory] = useState(urlCategory || "All Products");
   const [sortValue, setSortValue] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -31,6 +33,16 @@ const ShopPage: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  // Naya: jab bhi URL ka category param badle (Navbar dropdown click), activeCategory sync karo
+  useEffect(() => {
+    if (urlCategory) {
+      setActiveCategory(urlCategory);
+    } else {
+      setActiveCategory("All Products");
+    }
+    setCurrentPage(1);
+  }, [urlCategory]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
