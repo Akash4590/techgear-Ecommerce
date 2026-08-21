@@ -10,9 +10,17 @@ import OrderSuccessPage from "./pages/Ordersuccesspage";
 import Orderspage from "./pages/Orderspage"
 import DealsPage from "./pages/DealsPage";
 import AboutPage from "./pages/About";
+import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import AccountPage from "./pages/AccountPage";
 const App = () => {
   return (
     <Routes>
+
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
       <Route path="/" element={<Home />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/cart" element={<CartPage />} />
@@ -23,6 +31,7 @@ const App = () => {
       <Route path="/order" element={<Orderspage />} />
       <Route path="/deals" element={<DealsPage />} />
       <Route path="/about" element={<AboutPage />} />
+      <Route path="/account" element={<AccountPage />} />
     </Routes>
   );
 };

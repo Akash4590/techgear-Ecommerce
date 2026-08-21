@@ -71,6 +71,12 @@ import shopboard4 from "./images/shop-anker.jfif"
 import ordersucces from "./images/ordersuccess.png"
 import abouthero from "./images/abouthero.png"
 import aboutmission from "./images/aboutmission.png"
+import signup from "./images/signup.png"
+import signin from "./images/signin.png"
+import forget from "./images/forget.png"
+import google from "./images/google.png"
+import apple from "./images/apple.png"
+import aple from "./images/aple.png"
 export const assets = {
 hero,
 travelBetter,
@@ -144,6 +150,11 @@ shopboard3,
 shopboard4,
 ordersucces,
 abouthero,
-aboutmission
-  
+aboutmission,
+signup,
+signin,
+forget,
+google,
+apple,
+aple
 };

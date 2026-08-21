@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Heart, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
+import { Search, Heart, ShoppingCart, Menu, X, ChevronDown, UserCircle2 } from "lucide-react";
 import { useShop } from "../context/ShopContext";
+import { useAuth } from "../context/AuthContext";
 import { productCategoryFilters } from "../data/Products";
 
 type NavLink = { label: string; hasDropdown: boolean; path: string };
@@ -18,7 +19,6 @@ const navLinks: NavLink[] = [
 const tap = { scale: 0.94 };
 const springy = { type: "spring", stiffness: 400, damping: 25 } as const;
 
-// motion + react-router Link ko combine karne ke liye
 const MotionLink = motion(Link);
 
 const Navbar = () => {
@@ -27,6 +27,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const { cartCount, wishlistCount } = useShop();
+  const { isAuthenticated } = useAuth(); // Naya
   const navigate = useNavigate();
   const categoryRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +38,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Dropdown ke bahar click karne pe band ho jaye
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
@@ -48,7 +48,6 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Search submit hone pe Shop page pe query param ke sath navigate karo
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -57,7 +56,6 @@ const Navbar = () => {
     }
   };
 
-  // Naya: category click hone pe Shop page pe filter ke sath navigate karo
   const handleCategoryClick = (category: string) => {
     setIsCategoryOpen(false);
     setIsMobileMenuOpen(false);
@@ -91,7 +89,6 @@ const Navbar = () => {
         {/* Desktop nav links */}
         <nav className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) => {
-            // Naya: Categories ke liye functional dropdown
             if (link.hasDropdown) {
               return (
                 <div key={link.label} ref={categoryRef} className="relative">
@@ -224,16 +221,30 @@ const Navbar = () => {
             </AnimatePresence>
           </MotionLink>
 
-          {/* Login */}
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.03 }}
-            whileTap={tap}
-            transition={springy}
-            className="rounded-lg bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#6366F1]"
-          >
-            Login
-          </motion.button>
+          {/* Naya: Auth-aware section — Login button ya My Account */}
+          {isAuthenticated ? (
+            <MotionLink
+              to="/account"
+              whileHover={{ scale: 1.03 }}
+              whileTap={tap}
+              transition={springy}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-[#111827] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors cursor-pointer"
+            >
+              <UserCircle2 size={18} />
+              My Account
+            </MotionLink>
+          ) : (
+            <motion.button
+              type="button"
+              onClick={() => navigate("/login")}
+              whileHover={{ scale: 1.03 }}
+              whileTap={tap}
+              transition={springy}
+              className="rounded-lg bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#6366F1] cursor-pointer"
+            >
+              Login
+            </motion.button>
+          )}
         </div>
 
         {/* Mobile actions */}
@@ -308,7 +319,6 @@ const Navbar = () => {
               {/* Mobile Nav */}
               <nav className="flex flex-col gap-1">
                 {navLinks.map((link, i) => {
-                  // Naya: Mobile Categories collapsible list
                   if (link.hasDropdown) {
                     return (
                       <div key={link.label}>
@@ -384,15 +394,32 @@ const Navbar = () => {
                   )}
                 </Link>
               </div>
-
-              {/* Login */}
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.97 }}
-                className="mt-4 w-full rounded-lg bg-[#4F46E5] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#6366F1]"
-              >
-                Login
-              </motion.button>
+              {isAuthenticated ? (
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    navigate("/account");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold text-[#111827]"
+                >
+                  <UserCircle2 size={18} />
+                  My Account
+                </motion.button>
+              ) : (
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    navigate("/signup");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                  className="mt-4 w-full rounded-lg bg-[#4F46E5] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#6366F1]"
+                >
+                  Login
+                </motion.button>
+              )}
             </div>
           </motion.div>
         )}
