@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import Product from "../models/product.js";
 
-// CREATE PRODUCT
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const {
@@ -55,7 +54,7 @@ export const createProduct = async (req: Request, res: Response) => {
   }
 };
 
-// GET ALL PRODUCTS
+
 export const getProducts = async (_req: Request, res: Response) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -74,7 +73,7 @@ export const getProducts = async (_req: Request, res: Response) => {
   }
 };
 
-// GET SINGLE PRODUCT
+
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -99,7 +98,7 @@ export const getProductById = async (req: Request, res: Response) => {
   }
 };
 
-// UPDATE PRODUCT
+
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const product = await Product.findByIdAndUpdate(

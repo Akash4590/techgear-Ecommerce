@@ -15,13 +15,15 @@ import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPassword from "./pages/ResetPassword";
 import AccountPage from "./pages/AccountPage";
+import AdminLayout from "./components/admin/Adminlayout";
+import AdminDashboardPage from "./pages/Admindashboardpage";
 const App = () => {
   return (
     <Routes>
 
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+    <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
      <Route path="/reset-password" element={<ResetPassword />}/>
       <Route path="/" element={<Home />} />
       <Route path="/shop" element={<Shop />} />
@@ -34,6 +36,9 @@ const App = () => {
       <Route path="/deals" element={<DealsPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/account" element={<AccountPage />} />
+      <Route path="/admin" element={<AdminLayout />}>
+  <Route index element={<AdminDashboardPage />} />
+</Route>
     </Routes>
   );
 };

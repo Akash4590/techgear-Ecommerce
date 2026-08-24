@@ -14,8 +14,10 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Find user
-    const user = await User.findOne({ email });
+    
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user || user.isDeleted) {
       return res.status(401).json({
         success: false,
@@ -23,7 +25,6 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
@@ -32,14 +33,13 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Generate JWT
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new Error("JWT_SECRET is not defined in .env file");
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       jwtSecret,
       { expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"] }
     );
@@ -53,6 +53,7 @@ export const login = async (req: Request, res: Response) => {
           id: user._id,
           name: user.name,
           email: user.email,
+          role: user.role,
         },
       },
     });

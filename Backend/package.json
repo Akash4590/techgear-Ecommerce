@@ -5,6 +5,7 @@
   "description": "A techgear backend complete backend system",
   "main": "index.ts",
   "scripts": {
+    "seed:admin": "tsx src/scripts/seedAdmin.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"

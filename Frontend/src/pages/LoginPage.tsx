@@ -17,13 +17,13 @@ import { API_BASE_URL } from "../config/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth(); 
+  const { login, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate(user?.role === "admin" ? "/admin" : "/");
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +56,13 @@ const LoginPage = () => {
       }
 
       login(data.data.token, data.data.user);
-      navigate("/");
+
+      // Admin ko dashboard, normal user ko home page pe bhej do
+      if (data.data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setError("Something went wrong. Please try again.");
     } finally {

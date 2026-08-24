@@ -1,10 +1,14 @@
-import React, { createContext, useContext, useState, useEffect} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
+
+export type UserRole = "user" | "admin";
+
 interface User {
   id: string;
   name: string;
   email: string;
- emailNotifications?: boolean;
+  role: UserRole;
+  emailNotifications?: boolean;
 }
 
 interface AuthContextType {
@@ -13,7 +17,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
-updateUser: (user: User) => void;
+  updateUser: (user: User) => void;
   loading: boolean;
 }
 
@@ -24,7 +28,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // App load hote hi localStorage se pehle se saved login restore karo
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -49,13 +52,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(null);
     setUser(null);
   };
- const updateUser = (updatedUser: User) => {
+
+  const updateUser = (updatedUser: User) => {
     localStorage.setItem("user", JSON.stringify(updatedUser));
     setUser(updatedUser);
   };
+
   return (
     <AuthContext.Provider
-value={{ user, token, isAuthenticated: !!token, login, logout, updateUser, loading }}
+      value={{ user, token, isAuthenticated: !!token, login, logout, updateUser, loading }}
     >
       {children}
     </AuthContext.Provider>
