@@ -1,21 +1,50 @@
 import { useState } from "react";
 import { Mail, Send, Lock, Link2, ShieldCheck, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
+import { API_BASE_URL } from "../config/api";
 
 const ForgotPasswordPage = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!email) {
-      alert("Please enter your email address.");
+      setError("Please enter your email address.");
       return;
     }
 
-   
-    console.log("Send reset link to:", email);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data) {
+        setError(data?.message || `Request failed (${res.status})`);
+        return;
+      }
+
+      if (!data.success) {
+        setError(data.message || "Something went wrong");
+        return;
+      }
+
+      // Code bhej diya gaya — ab reset page pe bhejo, email ko sath le jao
+      navigate("/reset-password", { state: { email } });
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,9 +84,15 @@ const ForgotPasswordPage = () => {
               password?
             </h1>
             <p className="text-sm text-gray-500 mb-8">
-              No worries! Enter your email address and we'll send you a link
+              No worries! Enter your email address and we'll send you a code
               to reset your password.
             </p>
+
+            {error && (
+              <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-600">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -81,10 +116,11 @@ const ForgotPasswordPage = () => {
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#4F46E5] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA]"
+                disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#4F46E5] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Send size={16} />
-                Send Reset Link
+                {loading ? "Sending..." : "Send Reset Code"}
               </button>
             </form>
 
@@ -97,8 +133,8 @@ const ForgotPasswordPage = () => {
                   Secure Password Reset
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  We'll send you a secure link to your email address. The
-                  link will expire in 15 minutes for your security.
+                  We'll send a 6-digit code to your email address. The
+                  code will expire in 15 minutes for your security.
                 </p>
               </div>
             </div>
@@ -121,7 +157,7 @@ const ForgotPasswordPage = () => {
                     1. Check your email
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    We'll send a reset link to your email address.
+                    We'll send a 6-digit code to your email address.
                   </p>
                 </div>
               </div>
@@ -132,10 +168,10 @@ const ForgotPasswordPage = () => {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#0B0B14]">
-                    2. Click the reset link
+                    2. Enter the code
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Click the link in the email to create a new password.
+                    Enter the code to verify it's really you.
                   </p>
                 </div>
               </div>

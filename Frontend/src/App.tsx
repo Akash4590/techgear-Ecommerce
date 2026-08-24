@@ -13,6 +13,7 @@ import AboutPage from "./pages/About";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPassword from "./pages/ResetPassword";
 import AccountPage from "./pages/AccountPage";
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+     <Route path="/reset-password" element={<ResetPassword />}/>
       <Route path="/" element={<Home />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/cart" element={<CartPage />} />

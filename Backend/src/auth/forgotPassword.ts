@@ -1,9 +1,7 @@
 import type { Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/user.js";
-import { transporter } from "../config/mailer.js";
+import { sendResetCodeEmail } from "../utils/sendEmail.js";
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
@@ -18,28 +16,29 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      // Security: don't reveal if email exists or not
+      // Security: don't reveal if email exists
       return res.status(200).json({
         success: true,
-        message: "If that email exists, a reset link has been generated",
+        message: "If that email exists, a reset code has been sent",
       });
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
+  
+    const resetCode = crypto.randomInt(100000, 999999).toString();
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    user.resetPasswordToken = resetCode;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
     await user.save();
 
-    // Note: In production, you would email this token to the user.
-    // For now, we return it directly so you can test in Postman.
+   
+    await sendResetCodeEmail(user.email, resetCode);
+
     res.status(200).json({
       success: true,
-      message: "Password reset token generated",
-      resetToken, // Remove this in production once email sending is added
+      message: "A reset code has been sent to your email",
     });
   } catch (error) {
+    console.error("Forgot password error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to process request",
