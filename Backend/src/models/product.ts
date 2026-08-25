@@ -20,6 +20,7 @@ export interface IProduct extends Document {
   inStock: boolean;
   isDeal: boolean;
   discountPercent?: number;
+  dealExpiresAt?: Date; 
 }
 
 const productSchema = new Schema<IProduct>(
@@ -38,6 +39,7 @@ const productSchema = new Schema<IProduct>(
     inStock: { type: Boolean, default: true },
     isDeal: { type: Boolean, default: false },
     discountPercent: { type: Number },
+    dealExpiresAt: { type: Date }, 
   },
   { timestamps: true }
 );

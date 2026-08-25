@@ -1,18 +1,81 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import { products } from "../data/Products";
+import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/shop/ProductCard";
 import Pagination from "../components/shop/Pagination";
+import { API_BASE_URL } from "../config/api";
+import type { Product } from "../types/product";
 
 const PRODUCTS_PER_PAGE = 8;
 
+// Backend ka raw deal product shape (jo humare Product mongoose model se aata hai)
+interface RawDealProduct {
+  _id: string;
+  name: string;
+  category: string;
+  price: number;
+  rating: number;
+  reviewCount: number;
+  imageAlt: string;
+  image: string;
+  images?: string[];
+  description?: string;
+  inStock: boolean;
+  isDeal: boolean;
+  discountPercent?: number;
+  dealExpiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Backend fields ko existing frontend Product type ki shape mein map karna
+const mapToProduct = (raw: RawDealProduct): Product => ({
+  _id: raw._id,
+  name: raw.name,
+  description: raw.description || "",
+  price: raw.price,
+  category: raw.category,
+  brand: "",
+  images: raw.images && raw.images.length > 0 ? raw.images : [raw.image],
+  stock: raw.inStock ? 99 : 0,
+  rating: raw.rating,
+  reviewsCount: raw.reviewCount,
+  isFeatured: false,
+  isDeal: raw.isDeal,
+  discount: raw.discountPercent || 0,
+  createdAt: raw.createdAt,
+  updatedAt: raw.updatedAt,
+});
+
 const DealsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [dealProducts, setDealProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const dealProducts = useMemo(() => products.filter((p) => p.isDeal), []);
+  useEffect(() => {
+    const fetchDeals = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`${API_BASE_URL}/products/deals`);
+        const data = await res.json();
+        if (!data.success) {
+          setError(data.message || "Failed to load deals");
+          return;
+        }
+        setDealProducts((data.data as RawDealProduct[]).map(mapToProduct));
+      } catch {
+        setError("Something went wrong while loading deals.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeals();
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(dealProducts.length / PRODUCTS_PER_PAGE));
 
@@ -46,24 +109,44 @@ const DealsPage = () => {
           <p className="text-sm text-gray-500">
             Save big on top tech products — limited time offers.
           </p>
-          {dealProducts.length > 0 && (
+          {!loading && !error && dealProducts.length > 0 && (
             <p className="text-sm text-gray-400 mt-1">
               {dealProducts.length} deal{dealProducts.length > 1 ? "s" : ""} found
             </p>
           )}
         </div>
 
-        {dealProducts.length === 0 ? (
+        {/* LOADING */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Loader2 size={24} className="animate-spin text-[#4F46E5] mb-3" />
+            <p className="text-sm text-gray-400">Loading deals...</p>
+          </div>
+        )}
+
+        {/* ERROR */}
+        {!loading && error && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <AlertCircle size={22} className="text-red-400 mb-3" />
+            <p className="text-sm text-gray-500">{error}</p>
+          </div>
+        )}
+
+        {/* EMPTY */}
+        {!loading && !error && dealProducts.length === 0 && (
           <p className="text-gray-400 text-sm py-10 text-center">
             No active deals right now. Check back soon!
           </p>
-        ) : (
+        )}
+
+        {/* GRID */}
+        {!loading && !error && dealProducts.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {paginatedDeals.map((product) => (
-              <div key={product.id} className="relative">
-                {product.discountPercent && (
+              <div key={product._id} className="relative">
+                {product.discount > 0 && (
                   <span className="absolute top-3 left-3 z-30 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-md">
-                    -{product.discountPercent}%
+                    -{product.discount}%
                   </span>
                 )}
                 <ProductCard product={product} />
@@ -73,7 +156,7 @@ const DealsPage = () => {
         )}
       </div>
 
-      {dealProducts.length > PRODUCTS_PER_PAGE && (
+      {!loading && !error && dealProducts.length > PRODUCTS_PER_PAGE && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

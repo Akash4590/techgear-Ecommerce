@@ -1,11 +1,37 @@
 import { useEffect, useState } from "react";
-import {ShoppingCart,CheckCircle2,XCircle,Package,DollarSign,Clock,ArrowUpRight
+import {
+  ShoppingCart,
+  CheckCircle2,
+  XCircle,
+  Package,
+  DollarSign,
+  Clock,
+  ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../config/api";
+
 interface RecentOrder {
-  _id: string; user: { name: string; email: string } | null; totalAmount: number;status: string;createdAt: string;}
-interface DashboardStats {totalOrders: number;deliveredOrders: number;cancelledOrders: number;pendingOrders: number;totalProducts: number;totalRevenue: number;recentOrders: RecentOrder[]}
+  _id: string;
+  user: {
+    name: string;
+    email: string;
+  } | null;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+
+interface DashboardStats {
+  totalOrders: number;
+  deliveredOrders: number;
+  cancelledOrders: number;
+  pendingOrders: number;
+  totalProducts: number;
+  totalRevenue: number;
+  recentOrders: RecentOrder[];
+}
+
 const statusStyles: Record<string, string> = {
   delivered: "bg-green-50 text-green-700",
   processing: "bg-orange-50 text-orange-700",
@@ -14,68 +40,173 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-red-50 text-red-700",
 };
 
-const formatStatus = (status: string) =>
-  status.charAt(0).toUpperCase() + status.slice(1);
+const formatStatus = (status: string) => {
+  if (!status) return "Unknown";
 
-const formatDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString("en-US", {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+};
 
 const AdminDashboardPage = () => {
-  const { token } = useAuth();
+  const { token, authFetch } = useAuth();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchStats = async () => {
+      if (!token) {
+        if (!cancelled) {
+          setLoading(false);
+          setError("Authentication token not found.");
+        }
+        return;
+      }
+
       try {
-        const res = await fetch(`${API_BASE_URL}/orders/admin/stats`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        setLoading(true);
+        setError("");
+
+        const res = await authFetch(
+          `${API_BASE_URL}/orders/admin/stats`
+        );
 
         const data = await res.json();
 
-        if (!data.success) {
-          setError(data.message || "Failed to load dashboard");
+        if (!res.ok || !data.success) {
+          if (!cancelled) {
+            setError(
+              data.message || "Failed to load dashboard"
+            );
+          }
           return;
         }
 
-        setStats(data.data);
+        if (!cancelled) {
+          setStats({
+            totalOrders: Number(data.data?.totalOrders ?? 0),
+            deliveredOrders: Number(
+              data.data?.deliveredOrders ?? 0
+            ),
+            cancelledOrders: Number(
+              data.data?.cancelledOrders ?? 0
+            ),
+            pendingOrders: Number(
+              data.data?.pendingOrders ?? 0
+            ),
+            totalProducts: Number(
+              data.data?.totalProducts ?? 0
+            ),
+            totalRevenue: Number(
+              data.data?.totalRevenue ?? 0
+            ),
+            recentOrders: Array.isArray(
+              data.data?.recentOrders
+            )
+              ? data.data.recentOrders
+              : [],
+          });
+        }
       } catch (err) {
+        if ((err as Error).message === "Session expired") {
+          return;
+        }
+
         console.error("Dashboard stats error:", err);
-        setError("Something went wrong while loading dashboard.");
+
+        if (!cancelled) {
+          setError(
+            "Something went wrong while loading dashboard."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    if (token) {
-      fetchStats();
-    }
-  }, [token]);
+    fetchStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, authFetch]);
+
+  // =========================
+  // LOADING
+  // =========================
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24 text-sm text-gray-500">
-        Loading dashboard...
+      <div className="w-full">
+        <div className="mb-8">
+          <div className="h-7 w-48 animate-pulse rounded bg-gray-100" />
+          <div className="mt-2 h-4 w-72 max-w-full animate-pulse rounded bg-gray-100" />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="animate-pulse rounded-xl border border-gray-200 bg-white p-5"
+            >
+              <div className="h-11 w-11 rounded-full bg-gray-100" />
+              <div className="mt-4 h-7 w-24 rounded bg-gray-100" />
+              <div className="mt-2 h-4 w-32 rounded bg-gray-100" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
+  // =========================
+  // ERROR
+  // =========================
+
   if (error || !stats) {
     return (
-      <div className="flex items-center justify-center py-24 text-sm text-red-500">
-        {error || "Failed to load dashboard data."}
+      <div className="flex min-h-[300px] items-center justify-center px-4">
+        <div className="text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+            <XCircle
+              size={22}
+              className="text-red-500"
+            />
+          </div>
+
+          <p className="text-sm font-semibold text-[#0B0B14]">
+            Unable to load dashboard
+          </p>
+
+          <p className="mt-1 text-sm text-gray-500">
+            {error || "Failed to load dashboard data."}
+          </p>
+        </div>
       </div>
     );
   }
+
+  // =========================
+  // STAT CARDS
+  // =========================
 
   const statCards = [
     {
@@ -110,16 +241,24 @@ const AdminDashboardPage = () => {
     },
     {
       label: "Total Revenue",
-      value: `$${stats.totalRevenue.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-      })}`,
+      value: `$${stats.totalRevenue.toLocaleString(
+        undefined,
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      )}`,
       icon: DollarSign,
       accent: "bg-blue-50 text-blue-600",
     },
   ];
 
+  // =========================
+  // UI
+  // =========================
+
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-xl font-bold text-[#0B0B14] sm:text-2xl">
@@ -127,26 +266,26 @@ const AdminDashboardPage = () => {
         </h1>
 
         <p className="mt-1 text-sm text-gray-500">
-          Welcome back — here's what's happening with your store today.
+          Welcome back — here&apos;s what&apos;s happening
+          with your store today.
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="mb-6 grid w-full min-w-0 grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
         {statCards.map((stat) => {
           const Icon = stat.icon;
 
           return (
             <div
               key={stat.label}
-              className="w-full min-w-0 rounded-xl border border-gray-200 bg-white p-4 sm:p-5"
+              className="min-w-0 rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-sm sm:p-5"
             >
               <div className="flex items-start justify-between gap-2">
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${stat.accent}`}
+                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${stat.accent}`}
                 >
-                  <Icon size={18} className="sm:hidden" />
-                  <Icon size={19} className="hidden sm:block" />
+                  <Icon size={18} />
                 </div>
               </div>
 
@@ -154,7 +293,7 @@ const AdminDashboardPage = () => {
                 {stat.value}
               </p>
 
-              <p className="mt-0.5 break-words text-sm text-gray-500">
+              <p className="mt-0.5 text-sm text-gray-500">
                 {stat.label}
               </p>
             </div>
@@ -163,7 +302,7 @@ const AdminDashboardPage = () => {
       </div>
 
       {/* Recent Orders */}
-      <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="w-full max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-4 sm:px-6">
           <h2 className="text-base font-bold text-[#0B0B14]">
@@ -172,7 +311,7 @@ const AdminDashboardPage = () => {
 
           <a
             href="/admin/orders"
-            className="flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium text-[#4F46E5] hover:underline"
+            className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-[#4F46E5] transition-colors hover:text-[#3730A3] hover:underline"
           >
             View all
             <ArrowUpRight size={14} />
@@ -181,22 +320,47 @@ const AdminDashboardPage = () => {
 
         {/* No Orders */}
         {stats.recentOrders.length === 0 ? (
-          <div className="px-4 py-14 text-center text-sm text-gray-400">
-            No orders yet. Orders will appear here once customers start
-            purchasing.
+          <div className="py-14 text-center">
+            <Package
+              size={32}
+              className="mx-auto mb-3 text-gray-300"
+            />
+
+            <p className="text-sm font-medium text-[#0B0B14]">
+              No orders yet
+            </p>
+
+            <p className="mt-1 px-4 text-sm text-gray-400">
+              Orders will appear here once customers start
+              purchasing.
+            </p>
           </div>
         ) : (
           <>
             {/* Desktop Table */}
             <div className="hidden overflow-x-auto sm:block">
-              <table className="w-full min-w-[650px] text-sm">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
-                    <th className="px-6 py-3 font-medium">Order ID</th>
-                    <th className="px-6 py-3 font-medium">Customer</th>
-                    <th className="px-6 py-3 font-medium">Date</th>
-                    <th className="px-6 py-3 font-medium">Total</th>
-                    <th className="px-6 py-3 font-medium">Status</th>
+                    <th className="px-6 py-3 font-medium">
+                      Order ID
+                    </th>
+
+                    <th className="px-6 py-3 font-medium">
+                      Customer
+                    </th>
+
+                    <th className="px-6 py-3 font-medium">
+                      Date
+                    </th>
+
+                    <th className="px-6 py-3 font-medium">
+                      Total
+                    </th>
+
+                    <th className="px-6 py-3 font-medium">
+                      Status
+                    </th>
                   </tr>
                 </thead>
 
@@ -206,22 +370,27 @@ const AdminDashboardPage = () => {
                       key={order._id}
                       className="border-b border-gray-50 transition-colors last:border-0 hover:bg-[#F8F9FC]"
                     >
+                      {/* Order ID */}
                       <td className="px-6 py-3.5 font-medium text-[#4F46E5]">
                         #{order._id.slice(-8).toUpperCase()}
                       </td>
 
+                      {/* Customer */}
                       <td className="px-6 py-3.5 text-[#0B0B14]">
                         {order.user?.name || "Unknown"}
                       </td>
 
+                      {/* Date */}
                       <td className="px-6 py-3.5 text-gray-500">
                         {formatDate(order.createdAt)}
                       </td>
 
+                      {/* Total */}
                       <td className="px-6 py-3.5 font-semibold text-[#0B0B14]">
                         ${order.totalAmount.toFixed(2)}
                       </td>
 
+                      {/* Status */}
                       <td className="px-6 py-3.5">
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -238,15 +407,15 @@ const AdminDashboardPage = () => {
               </table>
             </div>
 
-            {/* Mobile Card List */}
+            {/* Mobile Cards */}
             <div className="divide-y divide-gray-50 sm:hidden">
               {stats.recentOrders.map((order) => (
                 <div
                   key={order._id}
                   className="min-w-0 px-4 py-4"
                 >
-                  <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-[#4F46E5]">
                         #{order._id.slice(-8).toUpperCase()}
                       </p>
@@ -254,10 +423,16 @@ const AdminDashboardPage = () => {
                       <p className="mt-0.5 truncate text-sm text-[#0B0B14]">
                         {order.user?.name || "Unknown"}
                       </p>
+
+                      {order.user?.email && (
+                        <p className="mt-0.5 truncate text-xs text-gray-400">
+                          {order.user.email}
+                        </p>
+                      )}
                     </div>
 
                     <span
-                      className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      className={`flex-shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                         statusStyles[order.status] ||
                         "bg-gray-50 text-gray-600"
                       }`}
@@ -266,12 +441,12 @@ const AdminDashboardPage = () => {
                     </span>
                   </div>
 
-                  <div className="flex min-w-0 items-center justify-between gap-2 text-sm">
-                    <span className="min-w-0 truncate text-gray-500">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate text-gray-500">
                       {formatDate(order.createdAt)}
                     </span>
 
-                    <span className="shrink-0 whitespace-nowrap font-semibold text-[#0B0B14]">
+                    <span className="flex-shrink-0 whitespace-nowrap font-semibold text-[#0B0B14]">
                       ${order.totalAmount.toFixed(2)}
                     </span>
                   </div>

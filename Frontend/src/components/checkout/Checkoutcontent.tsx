@@ -4,7 +4,6 @@ import {
   Pencil,
   CheckCircle2,
   Truck,
-  Rocket,
   CreditCard,
   Lock,
   ShieldCheck,
@@ -12,6 +11,8 @@ import {
   Award,
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
+import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config/api";
 
 type DeliveryMethod = "standard" | "express";
 type PaymentMethod = "card" | "paypal" | "applepay" | "googlepay";
@@ -38,7 +39,8 @@ const stateOptionsByCountry: Record<string, string[]> = {
 };
 
 const CheckoutContent = () => {
-  const { cartItems, clearCart, addOrder } = useShop();
+  const { cartItems, clearCart } = useShop();
+  const { token } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -55,6 +57,9 @@ const CheckoutContent = () => {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("standard");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const availableStates = country ? stateOptionsByCountry[country] ?? [] : [];
 
   const handleCountryChange = (value: string) => {
@@ -69,62 +74,6 @@ const CheckoutContent = () => {
     googlepay: "Google Pay",
   };
 
-  const handlePlaceOrder = () => {
-    if (
-      !email ||
-      !firstName ||
-      !lastName ||
-      !address ||
-      !city ||
-      !state ||
-      !zip ||
-      !country
-    ) {
-      alert("Please fill in all required fields before placing your order.");
-      return;
-    }
-
-    const orderId = `TG-${new Date().getFullYear()}-${Math.floor(
-      10000 + Math.random() * 90000
-    )}`;
-
-    const orderDate = new Date().toLocaleString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-
-    const orderData = {
-      orderId,
-      orderDate,
-      paymentMethod: paymentMethodLabels[paymentMethod],
-      deliveryMethod,
-      shipping: {
-        firstName,
-        lastName,
-        address,
-        apartment,
-        city,
-        state,
-        zip,
-        country,
-        phone,
-        email,
-      },
-      items: cartItems,
-      subtotal,
-      discount: appliedDiscount,
-      shippingCost,
-      total,
-    };
-
-    addOrder(orderData);
-    navigate("/ordersuccess", { state: orderData });
-    clearCart();
-  };
-
   const discount = 50;
   const expressShippingCost = 12.99;
 
@@ -135,6 +84,104 @@ const CheckoutContent = () => {
   const appliedDiscount = subtotal > 0 ? Math.min(discount, subtotal) : 0;
   const shippingCost = deliveryMethod === "express" ? expressShippingCost : 0;
   const total = subtotal - appliedDiscount + shippingCost;
+
+  const handlePlaceOrder = async () => {
+    setError("");
+
+    if (
+      !email ||
+      !firstName ||
+      !lastName ||
+      !address ||
+      !city ||
+      !state ||
+      !zip ||
+      !country
+    ) {
+      setError("Please fill in all required fields before placing your order.");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setError("Your cart is empty.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: cartItems.map(({ product, quantity }) => ({
+            productId: product._id,
+            name: product.name,
+            image: product.image,
+            price: product.price,
+            quantity,
+          })),
+          totalAmount: total,
+          shippingAddress: {
+            fullName: `${firstName} ${lastName}`,
+            address: apartment ? `${address}, ${apartment}` : address,
+            city,
+            postalCode: zip,
+            phone,
+          },
+          paymentMethod: paymentMethodLabels[paymentMethod],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        setError(data.message || "Failed to place order. Please try again.");
+        return;
+      }
+
+      const orderDate = new Date().toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+
+      clearCart();
+      navigate("/ordersuccess", {
+        state: {
+          orderId: `#${data.data._id.slice(-8).toUpperCase()}`,
+          orderDate,
+          paymentMethod: paymentMethodLabels[paymentMethod],
+          deliveryMethod,
+          shipping: {
+            firstName,
+            lastName,
+            address,
+            apartment,
+            city,
+            state,
+            zip,
+            country,
+            phone,
+            email,
+          },
+          items: cartItems,
+          subtotal,
+          discount: appliedDiscount,
+          shippingCost,
+          total,
+        },
+      });
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -542,14 +589,21 @@ const CheckoutContent = () => {
             All transactions are secure and encrypted.
           </p>
 
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={handlePlaceOrder}
-            className="mt-5 flex w-full items-center justify-between rounded-lg bg-[#4F46E5] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] cursor-pointer"
+            disabled={loading}
+            className="mt-5 flex w-full items-center justify-between rounded-lg bg-[#4F46E5] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <span className="flex items-center gap-2">
               <Lock size={16} />
-              Place Order
+              {loading ? "Placing Order..." : "Place Order"}
             </span>
             <span>${total.toFixed(2)}</span>
           </button>

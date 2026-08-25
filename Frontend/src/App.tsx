@@ -17,6 +17,9 @@ import ResetPassword from "./pages/ResetPassword";
 import AccountPage from "./pages/AccountPage";
 import AdminLayout from "./components/admin/Adminlayout";
 import AdminDashboardPage from "./pages/Admindashboardpage";
+import AdminProductsPage from "./pages/AdminProductsPage";
+import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AdminDealsPage from "./pages/AdminDealsPage";
 const App = () => {
   return (
     <Routes>
@@ -38,6 +41,9 @@ const App = () => {
       <Route path="/account" element={<AccountPage />} />
       <Route path="/admin" element={<AdminLayout />}>
   <Route index element={<AdminDashboardPage />} />
+  <Route path="products" element={<AdminProductsPage />} />
+   <Route path="orders" element={<AdminOrdersPage />} />  
+    <Route path="deals" element={<AdminDealsPage />} /> 
 </Route>
     </Routes>
   );
