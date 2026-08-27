@@ -10,10 +10,6 @@ import ProductGrid from "../components/shop/ProductGrid";
 import Pagination from "../components/shop/Pagination";
 import Footer from "../components/Footer";
 
-// =========================
-// BACKEND PRODUCT TYPE
-// =========================
-
 export interface Product {
   _id: string;
   name: string;
@@ -37,24 +33,11 @@ const PRODUCTS_PER_PAGE = 8;
 const ShopPage = () => {
   const [searchParams] = useSearchParams();
 
-  // =========================
-  // URL PARAMETERS
-  // =========================
-
   const searchQuery = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category");
-
-  // =========================
-  // PRODUCTS API STATE
-  // =========================
-
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-
-  // =========================
-  // SHOP STATE
-  // =========================
 
   const [activeCategory, setActiveCategory] = useState(
     urlCategory || "All Products"
@@ -70,10 +53,6 @@ const ShopPage = () => {
     minRating: 0,
     inStockOnly: false,
   });
-
-  // =========================
-  // FETCH PRODUCTS FROM BACKEND
-  // =========================
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -109,18 +88,9 @@ const ShopPage = () => {
 
     fetchProducts();
   }, []);
-
-  // =========================
-  // RESET PAGE WHEN SEARCH CHANGES
-  // =========================
-
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
-
-  // =========================
-  // SYNC CATEGORY WITH URL
-  // =========================
 
   useEffect(() => {
     if (urlCategory) {
@@ -132,18 +102,13 @@ const ShopPage = () => {
     setCurrentPage(1);
   }, [urlCategory]);
 
-  // =========================
-  // FILTER PRODUCTS
-  // =========================
-
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      // Category tab filter
+    
       const matchesTabCategory =
         activeCategory === "All Products" ||
         product.category === activeCategory;
 
-      // Sidebar category filter
       const matchesSidebarCategory =
         filters.categories.length === 0 ||
         filters.categories.includes(product.category);
@@ -151,16 +116,11 @@ const ShopPage = () => {
       // Price filter
       const matchesPrice =
         product.price <= filters.maxPrice;
-
-      // Rating filter
       const matchesRating =
         product.rating >= filters.minRating;
 
-      // Stock filter
       const matchesStock =
         !filters.inStockOnly || product.stock > 0;
-
-      // Search filter
       const normalizedSearch =
         searchQuery.trim().toLowerCase();
 
@@ -194,10 +154,6 @@ const ShopPage = () => {
     filters,
     searchQuery,
   ]);
-
-  // =========================
-  // SORT PRODUCTS
-  // =========================
 
   const sortedProducts = useMemo(() => {
     const list = [...filteredProducts];
@@ -237,18 +193,12 @@ const ShopPage = () => {
     }
   }, [filteredProducts, sortValue]);
 
-  // =========================
-  // PAGINATION
-  // =========================
-
   const totalPages = Math.max(
     1,
     Math.ceil(
       sortedProducts.length / PRODUCTS_PER_PAGE
     )
   );
-
-  // Make sure current page never exceeds total pages
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -264,11 +214,6 @@ const ShopPage = () => {
       startIndex + PRODUCTS_PER_PAGE
     );
   }, [sortedProducts, currentPage]);
-
-  // =========================
-  // CATEGORY COUNTS
-  // =========================
-
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {
       "All Products": products.length,
@@ -281,11 +226,6 @@ const ShopPage = () => {
 
     return counts;
   }, [products]);
-
-  // =========================
-  // HANDLERS
-  // =========================
-
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
     setCurrentPage(1);
@@ -306,11 +246,6 @@ const ShopPage = () => {
       behavior: "smooth",
     });
   };
-
-  // =========================
-  // UI
-  // =========================
-
   return (
     <div className="min-h-screen bg-white">
       <Navbar />

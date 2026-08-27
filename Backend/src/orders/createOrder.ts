@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import Order from "../models/Order.js";
+import Product from "../models/product.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
-
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { items, totalAmount, shippingAddress, paymentMethod } = req.body;
@@ -19,7 +19,23 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         message: "Shipping address is required",
       });
     }
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
 
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Product not found: ${item.name}`,
+        });
+      }
+
+      if (product.stockQuantity < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Not enough stock for "${product.name}". Only ${product.stockQuantity} left.`,
+        });
+      }
+    }
     const order = await Order.create({
       user: req.userId,
       items,
@@ -27,6 +43,14 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       shippingAddress,
       paymentMethod: paymentMethod || "Cash on Delivery",
     });
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        product.stockQuantity -= item.quantity;
+        product.inStock = product.stockQuantity > 0;
+        await product.save();
+      }
+    }
 
     res.status(201).json({
       success: true,

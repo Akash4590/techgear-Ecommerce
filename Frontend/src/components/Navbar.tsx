@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Heart, ShoppingCart, Menu, X, ChevronDown, UserCircle2 } from "lucide-react";
+import { Search, Heart, ShoppingCart, Menu, X, ChevronDown, UserCircle2, LayoutDashboard } from "lucide-react";
 import { useShop } from "../context/ShopContext";
 import { useAuth } from "../context/AuthContext";
 import { productCategoryFilters } from "../data/Products";
@@ -16,6 +16,11 @@ const navLinks: NavLink[] = [
   { label: "About Us", hasDropdown: false, path: "/about" },
 ];
 
+// Naya: Admin-only nav link — Dashboard. Yeh sirf role === "admin" hone par
+// navLinks ke saath append hoga, taake admin kisi bhi page (Home included)
+// se hamesha Dashboard par wapas ja sake.
+const adminNavLink: NavLink = { label: "Dashboard", hasDropdown: false, path: "/admin" };
+
 const tap = { scale: 0.94 };
 const springy = { type: "spring", stiffness: 400, damping: 25 } as const;
 
@@ -27,9 +32,14 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const { cartCount, wishlistCount } = useShop();
-  const { isAuthenticated } = useAuth(); // Naya
+  const { isAuthenticated, user } = useAuth(); // Naya: user bhi liya role check ke liye
   const navigate = useNavigate();
   const categoryRef = useRef<HTMLDivElement>(null);
+
+  // Naya: agar logged-in user admin hai to Dashboard link ko list mein add karo.
+  // Normal user ke liye yeh original navLinks hi rahega — unchanged.
+  const isAdmin = isAuthenticated && user?.role === "admin";
+  const links: NavLink[] = isAdmin ? [...navLinks, adminNavLink] : navLinks;
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -88,7 +98,7 @@ const Navbar = () => {
 
         {/* Desktop nav links */}
         <nav className="hidden items-center gap-8 lg:flex">
-          {navLinks.map((link) => {
+          {links.map((link) => {
             if (link.hasDropdown) {
               return (
                 <div key={link.label} ref={categoryRef} className="relative">
@@ -132,12 +142,17 @@ const Navbar = () => {
               );
             }
 
+            // Naya: Dashboard link ko baaki links jaisa hi treat kiya, sirf ek
+            // chhota LayoutDashboard icon add kiya visual distinction ke liye.
+            const isDashboardLink = link.label === "Dashboard";
+
             return (
               <Link
                 key={link.label}
                 to={link.path}
                 className="group relative flex items-center gap-1 text-sm font-medium text-[#111827] transition-colors hover:text-[#4F46E5]"
               >
+                {isDashboardLink && <LayoutDashboard className="h-4 w-4" strokeWidth={2} />}
                 {link.label}
                 <span className="absolute -bottom-1.5 left-0 h-[1.5px] w-0 bg-[#4F46E5] transition-all duration-200 ease-out group-hover:w-full" />
               </Link>
@@ -169,57 +184,62 @@ const Navbar = () => {
         {/* Right actions - desktop */}
         <div className="hidden items-center gap-4 md:flex">
 
-          {/* Wishlist */}
-          <MotionLink
-            to="/wishlist"
-            aria-label="Wishlist"
-            whileHover={{ scale: 1.15 }}
-            whileTap={tap}
-            transition={springy}
-            className="relative text-[#111827] transition-colors hover:text-[#4F46E5]"
-          >
-            <Heart className="h-5 w-5" strokeWidth={2} />
-            <AnimatePresence>
-              {wishlistCount > 0 && (
-                <motion.span
-                  key={wishlistCount}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={springy}
-                  className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white"
-                >
-                  {wishlistCount}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </MotionLink>
+          {/* Naya: Admin ke liye Wishlist/Cart icons hide — admin shopping role nahi rakhta */}
+          {!isAdmin && (
+            <>
+              {/* Wishlist */}
+              <MotionLink
+                to="/wishlist"
+                aria-label="Wishlist"
+                whileHover={{ scale: 1.15 }}
+                whileTap={tap}
+                transition={springy}
+                className="relative text-[#111827] transition-colors hover:text-[#4F46E5]"
+              >
+                <Heart className="h-5 w-5" strokeWidth={2} />
+                <AnimatePresence>
+                  {wishlistCount > 0 && (
+                    <motion.span
+                      key={wishlistCount}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={springy}
+                      className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white"
+                    >
+                      {wishlistCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </MotionLink>
 
-          {/* Cart */}
-          <MotionLink
-            to="/cart"
-            aria-label="Cart"
-            whileHover={{ scale: 1.15 }}
-            whileTap={tap}
-            transition={springy}
-            className="relative text-[#111827] transition-colors hover:text-[#4F46E5]"
-          >
-            <ShoppingCart className="h-5 w-5" strokeWidth={2} />
-            <AnimatePresence>
-              {cartCount > 0 && (
-                <motion.span
-                  key={cartCount}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={springy}
-                  className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white"
-                >
-                  {cartCount}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </MotionLink>
+              {/* Cart */}
+              <MotionLink
+                to="/cart"
+                aria-label="Cart"
+                whileHover={{ scale: 1.15 }}
+                whileTap={tap}
+                transition={springy}
+                className="relative text-[#111827] transition-colors hover:text-[#4F46E5]"
+              >
+                <ShoppingCart className="h-5 w-5" strokeWidth={2} />
+                <AnimatePresence>
+                  {cartCount > 0 && (
+                    <motion.span
+                      key={cartCount}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={springy}
+                      className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </MotionLink>
+            </>
+          )}
 
           {/* Naya: Auth-aware section — Login button ya My Account */}
           {isAuthenticated ? (
@@ -250,15 +270,17 @@ const Navbar = () => {
         {/* Mobile actions */}
         <div className="flex items-center gap-4 md:hidden">
 
-          {/* Mobile Cart */}
-          <MotionLink to="/cart" aria-label="Cart" whileTap={tap} className="relative text-[#111827]">
-            <ShoppingCart className="h-5 w-5" strokeWidth={2} />
-            {cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white">
-                {cartCount}
-              </span>
-            )}
-          </MotionLink>
+          {/* Naya: Mobile Cart bhi admin ke liye hide */}
+          {!isAdmin && (
+            <MotionLink to="/cart" aria-label="Cart" whileTap={tap} className="relative text-[#111827]">
+              <ShoppingCart className="h-5 w-5" strokeWidth={2} />
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </MotionLink>
+          )}
 
           {/* Mobile Menu Button */}
           <motion.button
@@ -318,7 +340,7 @@ const Navbar = () => {
 
               {/* Mobile Nav */}
               <nav className="flex flex-col gap-1">
-                {navLinks.map((link, i) => {
+                {links.map((link, i) => {
                   if (link.hasDropdown) {
                     return (
                       <div key={link.label}>
@@ -358,6 +380,9 @@ const Navbar = () => {
                     );
                   }
 
+                  // Naya: mobile menu mein bhi Dashboard link ke saath icon
+                  const isDashboardLink = link.label === "Dashboard";
+
                   return (
                     <motion.div
                       key={link.label}
@@ -369,31 +394,36 @@ const Navbar = () => {
                       <Link
                         to={link.path}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm font-medium text-[#111827] hover:bg-[#F8F9FC]"
+                        className="flex items-center gap-2 justify-between rounded-lg px-2 py-3 text-left text-sm font-medium text-[#111827] hover:bg-[#F8F9FC]"
                       >
-                        {link.label}
+                        <span className="flex items-center gap-2">
+                          {isDashboardLink && <LayoutDashboard className="h-4 w-4" strokeWidth={2} />}
+                          {link.label}
+                        </span>
                       </Link>
                     </motion.div>
                   );
                 })}
               </nav>
 
-              {/* Wishlist */}
-              <div className="mt-4 flex items-center gap-4 border-t border-[#E5E7EB] pt-4">
-                <Link
-                  to="/wishlist"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-sm font-medium text-[#111827]"
-                >
-                  <Heart className="h-5 w-5" strokeWidth={2} />
-                  Wishlist
-                  {wishlistCount > 0 && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-              </div>
+              {/* Naya: Mobile Wishlist section bhi admin ke liye hide */}
+              {!isAdmin && (
+                <div className="mt-4 flex items-center gap-4 border-t border-[#E5E7EB] pt-4">
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2 text-sm font-medium text-[#111827]"
+                  >
+                    <Heart className="h-5 w-5" strokeWidth={2} />
+                    Wishlist
+                    {wishlistCount > 0 && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] font-semibold text-white">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                </div>
+              )}
               {isAuthenticated ? (
                 <motion.button
                   type="button"

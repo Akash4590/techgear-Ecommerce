@@ -12,7 +12,7 @@ const CartPage = () => {
     <div className="bg-white min-h-screen">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
         <CartBreadcrumb />
 
         <div className="mb-6">

@@ -64,7 +64,7 @@ const SignUpPage = () => {
       return;
     }
     if (password.length < 5) {
-      setError("Password must be at least 8 characters.");
+      setError("Password must be at least 6 characters.");
       return;
     }
     if (password !== confirmPassword) {
@@ -200,7 +200,7 @@ const SignUpPage = () => {
                   </button>
                 </div>
                 <p className="mt-1.5 text-xs text-gray-400">
-                  Use at least 8 characters with a mix of letters, numbers &
+                  Use at least 6 characters with a mix of letters, numbers &
                   symbols.
                 </p>
               </div>

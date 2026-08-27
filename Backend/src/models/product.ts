@@ -17,10 +17,11 @@ export interface IProduct extends Document {
   colors?: IColorOption[];
   storageOptions?: string[];
   description?: string;
+  stockQuantity: number; // Naya
   inStock: boolean;
   isDeal: boolean;
   discountPercent?: number;
-  dealExpiresAt?: Date; 
+  dealExpiresAt?: Date;
 }
 
 const productSchema = new Schema<IProduct>(
@@ -36,10 +37,11 @@ const productSchema = new Schema<IProduct>(
     colors: [{ name: String, hex: String }],
     storageOptions: { type: [String] },
     description: { type: String },
+    stockQuantity: { type: Number, required: true, default: 0 }, // Naya
     inStock: { type: Boolean, default: true },
     isDeal: { type: Boolean, default: false },
     discountPercent: { type: Number },
-    dealExpiresAt: { type: Date }, 
+    dealExpiresAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -23,6 +23,14 @@ export const updateProduct = async (req: Request, res: Response) => {
       updateData.storageOptions = JSON.parse(updateData.storageOptions);
     }
 
+    // ===== Stock quantity handling =====
+    // FormData se string aati hai, Number mein convert karo aur inStock auto-sync karo
+    if (updateData.stockQuantity !== undefined) {
+      const qty = Number(updateData.stockQuantity) || 0;
+      updateData.stockQuantity = qty;
+      updateData.inStock = qty > 0;
+    }
+
     // ===== Deal fields handling =====
     const wantsDeal = updateData.isDeal === "true" || updateData.isDeal === true;
     const dealDurationDays = updateData.dealDurationDays;

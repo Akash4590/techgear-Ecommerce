@@ -17,6 +17,8 @@ import { API_BASE_URL } from "../../config/api";
 type DeliveryMethod = "standard" | "express";
 type PaymentMethod = "card" | "paypal" | "applepay" | "googlepay";
 
+const CART_WIDE_DISCOUNT_PERCENT = 10; // Store-wide extra discount %
+
 const stateOptionsByCountry: Record<string, string[]> = {
   "United States": [
     "California",
@@ -74,14 +76,31 @@ const CheckoutContent = () => {
     googlepay: "Google Pay",
   };
 
-  const discount = 50;
   const expressShippingCost = 12.99;
 
+  // Naya: har product ki effective price (agar deal hai to discounted price)
+  const getEffectivePrice = (product: (typeof cartItems)[0]["product"]) => {
+    if (product.isDeal && product.discountPercent) {
+      return product.price - (product.price * product.discountPercent) / 100;
+    }
+    return product.price;
+  };
+
+  // Subtotal — sab items ki effective (deal-adjusted) price ka total
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+    (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
     0
   );
-  const appliedDiscount = subtotal > 0 ? Math.min(discount, subtotal) : 0;
+
+  // Cart-wide discount sirf un items par jo pehle se deal mein NAHI hain
+  const nonDealSubtotal = cartItems.reduce((sum, item) => {
+    if (item.product.isDeal) return sum;
+    return sum + item.product.price * item.quantity;
+  }, 0);
+
+  const appliedDiscount =
+    nonDealSubtotal > 0 ? (nonDealSubtotal * CART_WIDE_DISCOUNT_PERCENT) / 100 : 0;
+
   const shippingCost = deliveryMethod === "express" ? expressShippingCost : 0;
   const total = subtotal - appliedDiscount + shippingCost;
 
@@ -120,7 +139,7 @@ const CheckoutContent = () => {
             productId: product._id,
             name: product.name,
             image: product.image,
-            price: product.price,
+            price: getEffectivePrice(product),
             quantity,
           })),
           totalAmount: total,
@@ -632,7 +651,7 @@ const CheckoutContent = () => {
 
           <div className="space-y-4 mb-5">
             {cartItems.map(({ product, quantity }) => (
-              <div key={product.id} className="flex items-start gap-3">
+              <div key={product._id} className="flex items-start gap-3">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
                   <img
                     src={product.image}
@@ -654,7 +673,10 @@ const CheckoutContent = () => {
                 </div>
 
                 <p className="text-sm font-semibold text-[#0B0B14]">
-                  ${(product.price * quantity).toLocaleString()}
+                  ${(getEffectivePrice(product) * quantity).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               </div>
             ))}
@@ -666,7 +688,10 @@ const CheckoutContent = () => {
                 Subtotal ({cartItems.length} {cartItems.length === 1 ? "item" : "items"})
               </span>
               <span className="font-medium text-[#0B0B14]">
-                ${subtotal.toLocaleString()}
+                ${subtotal.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </span>
             </div>
 
@@ -682,9 +707,14 @@ const CheckoutContent = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-gray-500">Discount</span>
+              <span className="text-gray-500">
+                Discount ({CART_WIDE_DISCOUNT_PERCENT}% off non-deal items)
+              </span>
               <span className="font-medium text-green-600">
-                -${appliedDiscount.toLocaleString()}
+                -${appliedDiscount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </span>
             </div>
           </div>

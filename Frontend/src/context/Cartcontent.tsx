@@ -18,17 +18,18 @@ const CartContent = () => {
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        
       {/* =====================================================
           LEFT SIDE — CART ITEMS
       ===================================================== */}
 
       <div className="lg:col-span-2">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          {/* Table Header */}
-          <div className="grid grid-cols-[minmax(260px,1fr)_100px_140px_100px_60px] items-center border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-500">
+          {/* Header row — ONLY visible from md up, matches body breakpoint */}
+          <div className="hidden md:grid md:grid-cols-[minmax(160px,1fr)_100px_140px_100px_60px] items-center border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-500">
             <span>Product</span>
             <span>Price</span>
-            <span>Quantity</span>
+            <span>Qty</span>
             <span>Total</span>
             <span>Action</span>
           </div>
@@ -37,78 +38,156 @@ const CartContent = () => {
           {cartItems.length > 0 ? (
             cartItems.map(({ product, quantity }, index) => (
               <div
-                key={product.id}
-                className={`grid grid-cols-[minmax(260px,1fr)_100px_140px_100px_60px] items-center px-6 py-5 ${
+                key={product._id}
+                className={
                   index !== cartItems.length - 1
                     ? "border-b border-gray-100"
                     : ""
-                }`}
+                }
               >
-                {/* Product */}
-                <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
-                    <img
-                      src={product.image}
-                      alt={product.imageAlt}
-                      className="h-full w-full object-contain p-2"
-                    />
-                  </div>
+                {/* ============ MOBILE CARD LAYOUT (below md) ============ */}
+                <div className="flex flex-col gap-4 px-4 py-5 sm:px-6 md:hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                        <img
+                          src={product.image}
+                          alt={product.imageAlt}
+                          className="h-full w-full object-contain p-2"
+                        />
+                      </div>
 
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-[#0B0B14]">
-                      {product.name}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {product.category}
-                    </p>
-                  </div>
-                </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-[#0B0B14]">
+                          {product.name}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {product.category}
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Price */}
-                <div className="text-sm font-medium text-[#0B0B14]">
-                  ${product.price.toLocaleString()}
-                </div>
-
-                {/* Quantity */}
-                <div>
-                  <div className="flex w-fit items-center overflow-hidden rounded-lg border border-gray-200">
                     <button
                       type="button"
-                      onClick={() => updateCartQuantity(product.id, -1)}
-                      className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
+                      onClick={() => removeFromCart(product._id)}
+                      aria-label={`Remove ${product.name}`}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-red-500 transition-colors hover:border-red-200 hover:bg-red-50"
                     >
-                      <Minus size={14} />
+                      <Trash2 size={16} />
                     </button>
+                  </div>
 
-                    <span className="flex h-9 w-9 items-center justify-center text-sm font-medium text-gray-700">
-                      {quantity}
+                  {/* Price */}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Price</span>
+                    <span className="font-medium text-[#0B0B14]">
+                      ${product.price.toLocaleString()}
                     </span>
+                  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => updateCartQuantity(product.id, 1)}
-                      className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
-                    >
-                      <Plus size={14} />
-                    </button>
+                  {/* Quantity */}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Quantity</span>
+                    <div className="flex w-fit items-center overflow-hidden rounded-lg border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(product._id, -1)}
+                        className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
+                      >
+                        <Minus size={14} />
+                      </button>
+
+                      <span className="flex h-9 w-9 items-center justify-center text-sm font-medium text-gray-700">
+                        {quantity}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(product._id, 1)}
+                        className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Item Total */}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Total</span>
+                    <span className="font-semibold text-[#0B0B14]">
+                      ${(product.price * quantity).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                {/* Item Total */}
-                <div className="text-sm font-semibold text-[#0B0B14]">
-                  ${(product.price * quantity).toLocaleString()}
-                </div>
+                {/* ============ DESKTOP / TABLET ROW LAYOUT (md and up) ============ */}
+                <div className="hidden md:grid md:grid-cols-[minmax(260px,1fr)_100px_140px_100px_60px] md:items-center px-6 py-5">
+                  {/* Product */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                      <img
+                        src={product.image}
+                        alt={product.imageAlt}
+                        className="h-full w-full object-contain p-2"
+                      />
+                    </div>
 
-                {/* Remove */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => removeFromCart(product.id)}
-                    aria-label={`Remove ${product.name}`}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-red-500 transition-colors hover:border-red-200 hover:bg-red-50"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-[#0B0B14]">
+                        {product.name}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {product.category}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="text-sm font-medium text-[#0B0B14]">
+                    ${product.price.toLocaleString()}
+                  </div>
+
+                  {/* Quantity */}
+                  <div>
+                    <div className="flex w-fit items-center overflow-hidden rounded-lg border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(product._id, -1)}
+                        className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
+                      >
+                        <Minus size={14} />
+                      </button>
+
+                      <span className="flex h-9 w-9 items-center justify-center text-sm font-medium text-gray-700">
+                        {quantity}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(product._id, 1)}
+                        className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Item Total */}
+                  <div className="text-sm font-semibold text-[#0B0B14]">
+                    ${(product.price * quantity).toLocaleString()}
+                  </div>
+
+                  {/* Remove */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(product._id)}
+                      aria-label={`Remove ${product.name}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-red-500 transition-colors hover:border-red-200 hover:bg-red-50"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -205,7 +284,7 @@ const CartContent = () => {
             Proceed to Checkout
           </button>
 
-          <div className="mt-5 flex items-center justify-between gap-2">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 sm:justify-between">
             <div className="rounded border border-gray-200 px-2 py-1 text-xs font-bold text-blue-700">
               VISA
             </div>

@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 import Product from "../models/product.js";
-
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const {
@@ -13,7 +12,7 @@ export const createProduct = async (req: Request, res: Response) => {
       colors,
       storageOptions,
       description,
-      inStock,
+      stockQuantity,
       isDeal,
       discountPercent,
       dealDurationDays,
@@ -26,7 +25,6 @@ export const createProduct = async (req: Request, res: Response) => {
       });
     }
 
-    // Multer + CloudinaryStorage: har uploaded file ke .path pe Cloudinary URL hota hai
     const files = req.files as Express.Multer.File[] | undefined;
     const uploadedImageUrls = files ? files.map((file) => file.path) : [];
 
@@ -36,15 +34,10 @@ export const createProduct = async (req: Request, res: Response) => {
         message: "At least one product image is required",
       });
     }
-
-    // Pehli image "main" image ban jati hai, poori list gallery ke liye
     const [mainImage] = uploadedImageUrls;
-
-    // colors/storageOptions frontend se FormData mein JSON string ki tarah aayenge
     const parsedColors = colors ? JSON.parse(colors) : undefined;
     const parsedStorageOptions = storageOptions ? JSON.parse(storageOptions) : undefined;
-
-    // Deal fields — FormData mein sab strings ki tarah aate hain
+    const qty = Number(stockQuantity) || 0;
     const wantsDeal = isDeal === "true" || isDeal === true;
 
     let dealFields: {
@@ -90,7 +83,8 @@ export const createProduct = async (req: Request, res: Response) => {
       colors: parsedColors,
       storageOptions: parsedStorageOptions,
       description,
-      inStock: inStock !== undefined ? inStock === "true" || inStock === true : true,
+      stockQuantity: qty, 
+      inStock: qty > 0, 
       ...dealFields,
     });
 

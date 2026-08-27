@@ -14,6 +14,7 @@ import {
   ImagePlus,
   Upload,
   Percent,
+  Boxes,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../config/api";
@@ -28,6 +29,7 @@ interface Product {
   imageAlt: string;
   image: string;
   description?: string;
+  stockQuantity: number; // Naya
   inStock: boolean;
   isDeal: boolean;
   discountPercent?: number;
@@ -42,7 +44,7 @@ const emptyForm = {
   price: "",
   imageAlt: "",
   description: "",
-  inStock: true,
+  stockQuantity: "", // Naya — "inStock" checkbox ki jagah
   dealEnabled: false,
   discountPercent: "",
   dealDurationDays: "5",
@@ -114,7 +116,6 @@ const AdminProductsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  // Revoke object URLs on unmount / when previews change, to avoid memory leaks
   useEffect(() => {
     return () => {
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -144,7 +145,7 @@ const AdminProductsPage = () => {
       price: String(product.price),
       imageAlt: product.imageAlt,
       description: product.description || "",
-      inStock: product.inStock,
+      stockQuantity: String(product.stockQuantity ?? 0), // Naya
       dealEnabled: product.isDeal,
       discountPercent: product.discountPercent ? String(product.discountPercent) : "",
       dealDurationDays: "5",
@@ -163,7 +164,6 @@ const AdminProductsPage = () => {
     setSelectedFiles(combined);
     setPreviewUrls(combined.map((file) => URL.createObjectURL(file)));
 
-    // Naya file select hote hi purani "existing" image ab replace ho jayegi
     setExistingImage(null);
 
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -181,6 +181,11 @@ const AdminProductsPage = () => {
 
     if (!formData.name || !formData.price || !formData.imageAlt) {
       setFormError("Name, price, and image alt text are required.");
+      return;
+    }
+
+    if (formData.stockQuantity === "" || Number(formData.stockQuantity) < 0) {
+      setFormError("Please enter a valid stock quantity (0 or more).");
       return;
     }
 
@@ -207,7 +212,7 @@ const AdminProductsPage = () => {
       body.append("price", formData.price);
       body.append("imageAlt", formData.imageAlt);
       body.append("description", formData.description);
-      body.append("inStock", String(formData.inStock));
+      body.append("stockQuantity", formData.stockQuantity); // Naya — "inStock" ki jagah
 
       // Deal fields
       body.append("isDeal", String(formData.dealEnabled));
@@ -224,7 +229,6 @@ const AdminProductsPage = () => {
         ? `${API_BASE_URL}/products/admin/${editingProduct._id}`
         : `${API_BASE_URL}/products/admin/create`;
 
-      // Content-Type header manually mat lagayein — browser khud multipart boundary set kar dega
       const res = await authFetch(url, {
         method: editingProduct ? "PUT" : "POST",
         body,
@@ -297,10 +301,13 @@ const AdminProductsPage = () => {
     }
   };
 
+  // Naya: total stock across current page of products
+  const totalStockOnPage = products.reduce((sum, p) => sum + (p.stockQuantity || 0), 0);
+
   return (
     <div className="w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#0B0B14]">Products</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your store's product catalog.</p>
@@ -313,6 +320,19 @@ const AdminProductsPage = () => {
           Add Product
         </button>
       </div>
+
+      {/* Naya: Total stock summary card */}
+      {!loading && !error && products.length > 0 && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 w-fit">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-[#4F46E5]">
+            <Boxes size={18} />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-[#0B0B14] leading-tight">{totalStockOnPage.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">Total units in stock (this page)</p>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative mb-5 max-w-sm">
@@ -373,13 +393,14 @@ const AdminProductsPage = () => {
                           <span className="text-gray-400">({product.reviewCount})</span>
                         </div>
                       </td>
+                      {/* Naya: stock quantity number ke sath badge */}
                       <td className="px-6 py-3.5">
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                             product.inStock ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
                           }`}
                         >
-                          {product.inStock ? "In Stock" : "Out of Stock"}
+                          {product.inStock ? `${product.stockQuantity} in stock` : "Out of Stock"}
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
@@ -443,12 +464,13 @@ const AdminProductsPage = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      {/* Naya: stock quantity mobile pe bhi */}
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                           product.inStock ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
                         }`}
                       >
-                        {product.inStock ? "In Stock" : "Out of Stock"}
+                        {product.inStock ? `${product.stockQuantity} in stock` : "Out of Stock"}
                       </span>
                       {product.isDeal && (
                         <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-indigo-50 text-[#4F46E5]">
@@ -585,7 +607,6 @@ const AdminProductsPage = () => {
                 />
 
                 <div className="grid grid-cols-4 gap-3">
-                  {/* Existing image (edit mode, before replacement) */}
                   {existingImage && (
                     <div className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden bg-[#F8F9FC]">
                       <img src={existingImage} alt="Current" className="h-full w-full object-contain p-1.5" />
@@ -595,7 +616,6 @@ const AdminProductsPage = () => {
                     </div>
                   )}
 
-                  {/* Newly selected previews */}
                   {previewUrls.map((url, index) => (
                     <div key={url} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden bg-[#F8F9FC]">
                       <img src={url} alt={`Preview ${index + 1}`} className="h-full w-full object-contain p-1.5" />
@@ -609,7 +629,6 @@ const AdminProductsPage = () => {
                     </div>
                   ))}
 
-                  {/* Upload trigger */}
                   {selectedFiles.length + (existingImage ? 1 : 0) < MAX_IMAGES && (
                     <button
                       type="button"
@@ -649,15 +668,27 @@ const AdminProductsPage = () => {
                 />
               </div>
 
-              <label className="flex items-center gap-2.5 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.inStock}
-                  onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-[#4F46E5] focus:ring-[#4F46E5]/30"
-                />
-                In Stock
-              </label>
+              {/* Naya: Stock Quantity — purani "In Stock" checkbox ki jagah */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">
+                  Stock Quantity
+                </label>
+                <div className="relative">
+                  <Boxes size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.stockQuantity}
+                    onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
+                    placeholder="e.g. 50"
+                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 focus:border-[#4F46E5]"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Product automatically shows as "Out of Stock" when this reaches 0, and reduces
+                  as customers place orders.
+                </p>
+              </div>
 
               {/* ===== Deal section ===== */}
               <div className="rounded-lg border border-gray-200 p-3.5">
