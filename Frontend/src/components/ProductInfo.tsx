@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Star, Minus, Plus, ShoppingCart, Heart, GitCompare } from "lucide-react";
-import type { Product } from "../data/Products";
+import type { Product } from "../types/product";
 import { useShop } from "../context/ShopContext";
 
 interface ProductInfoProps {
@@ -9,6 +10,7 @@ interface ProductInfoProps {
 
 const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist, isInCart } = useShop();
+  const navigate = useNavigate();
 
   const hasColors = !!product.colors && product.colors.length > 0;
   const hasStorage = !!product.storageOptions && product.storageOptions.length > 0;
@@ -17,15 +19,27 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
   const [selectedStorage, setSelectedStorage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
-  const wishlisted = isInWishlist(product.id);
-  const inCart = isInCart(product.id);
+  const wishlisted = isInWishlist(product._id);
+  const inCart = isInCart(product._id);
 
   const handleWishlistClick = () => {
-    wishlisted ? removeFromWishlist(product.id) : addToWishlist(product);
+    wishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
   };
 
   const handleAddToCart = () => {
     addToCart(product);
+  };
+
+  const handleBuyNow = () => {
+    if (!inCart) {
+      addToCart(product);
+    }
+    if (quantity > 1) {
+      for (let index = 1; index < quantity; index += 1) {
+        addToCart(product);
+      }
+    }
+    navigate("/checkout");
   };
 
   const decreaseQty = () => setQuantity((q) => Math.max(1, q - 1));
@@ -53,7 +67,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
           ))}
         </div>
         <span className="font-medium text-[#0B0B14]">{product.rating.toFixed(1)}</span>
-        <span className="text-gray-500">({product.reviewCount} reviews)</span>
+        <span className="text-gray-500">({product.reviewsCount} reviews)</span>
       </div>
 
       {/* Price */}
@@ -147,7 +161,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
           <ShoppingCart size={16} />
           {inCart ? "Added to Cart" : "Add to Cart"}
         </button>
-        <button className="flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-[#4F46E5] text-[#4F46E5] text-sm font-medium hover:bg-[#4F46E5]/5 transition-colors cursor-pointer">
+        <button onClick={handleBuyNow} className="flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-[#4F46E5] text-[#4F46E5] text-sm font-medium hover:bg-[#4F46E5]/5 transition-colors cursor-pointer">
           Buy Now
         </button>
       </div>

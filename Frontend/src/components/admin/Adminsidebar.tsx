@@ -88,9 +88,17 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
 
         <div className="border-t border-white/10 p-4">
           <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-bold">
-              {user?.name?.charAt(0).toUpperCase() || "A"}
-            </div>
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-8 w-8 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-bold">
+                {user?.name?.charAt(0).toUpperCase() || "A"}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="truncate text-xs font-semibold">{user?.name || "Admin"}</p>
               <p className="truncate text-[11px] text-gray-400">{user?.email}</p>

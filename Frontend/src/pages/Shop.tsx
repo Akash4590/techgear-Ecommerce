@@ -19,6 +19,8 @@ export interface Product {
   brand: string;
   images: string[];
   stock: number;
+  stockQuantity?: number;
+  inStock?: boolean;
   rating: number;
   reviewsCount: number;
   isFeatured: boolean;
@@ -76,7 +78,15 @@ const ShopPage = () => {
           );
         }
 
-        setProducts(result.data || []);
+        setProducts(
+          (result.data || []).map((product: Product) => ({
+            ...product,
+            stock:
+              typeof product.stockQuantity === "number"
+                ? product.stockQuantity
+                : product.stock ?? (product.inStock ? 1 : 0),
+          }))
+        );
       } catch (error) {
         console.error("Error fetching products:", error);
 

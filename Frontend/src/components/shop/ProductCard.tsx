@@ -6,6 +6,8 @@ interface ProductCardProps {product: Product;}
 const ProductCard = ({ product }: ProductCardProps) => {
 const{_id,name,images,rating,reviewsCount,price,category,stock,discount} = product;
 const{addToCart,addToWishlist,removeFromWishlist,isInWishlist,isInCart} = useShop();
+  const productRating = product.rating ?? 0;
+  const productReviewCount = product.reviewCount ?? reviewsCount ?? 0;
   const wishlisted = isInWishlist(_id);
   const inCart = isInCart(_id);
   const handleWishlistClick = () => {
@@ -44,19 +46,23 @@ const{addToCart,addToWishlist,removeFromWishlist,isInWishlist,isInCart} = useSho
           {name}
         </h3>
       </Link>
-      <div className="mt-1.5 flex items-center gap-1 text-xs">
-        <Star
-          size={13}
-          strokeWidth={1.8}
-          className="fill-[#F59E0B] text-[#F59E0B]"/>
-        <span className="font-medium text-gray-700">
-          {rating.toFixed(1)}
-        </span>
+      {productRating > 0 && productReviewCount > 0 ? (
+        <div className="mt-1.5 flex items-center gap-1 text-xs">
+          <Star
+            size={13}
+            strokeWidth={1.8}
+            className="fill-[#F59E0B] text-[#F59E0B]"/>
+          <span className="font-medium text-gray-700">
+            {productRating.toFixed(1)}
+          </span>
 
-        <span className="text-gray-400">
-          ({reviewsCount})
-        </span>
-      </div>
+          <span className="text-gray-400">
+            ({productReviewCount})
+          </span>
+        </div>
+      ) : (
+        <div className="mt-1.5 text-xs text-gray-400">No ratings yet</div>
+      )}
 
       <div className="mt-2 flex items-center gap-2">
         <span className="text-base font-bold text-[#0B0B14]">

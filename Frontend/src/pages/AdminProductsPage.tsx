@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -54,12 +55,13 @@ const MAX_IMAGES = 5;
 
 const AdminProductsPage = () => {
   const { token, authFetch } = useAuth();
+  const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -80,6 +82,11 @@ const AdminProductsPage = () => {
   const [dealTarget, setDealTarget] = useState<Product | null>(null);
   const [dealDiscount, setDealDiscount] = useState("");
   const [savingDeal, setSavingDeal] = useState(false);
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setPage(1);
+  }, [searchParams]);
 
   const fetchProducts = async () => {
     setLoading(true);

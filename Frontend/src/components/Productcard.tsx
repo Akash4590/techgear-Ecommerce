@@ -9,6 +9,8 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const { name, price, rating, reviewCount, imageAlt, image } = product;
+  const productRating = rating ?? 0;
+  const productReviewCount = reviewCount ?? 0;
 
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
@@ -95,27 +97,31 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <div className="relative z-[1] mt-4">
         <h3 className="text-sm font-semibold text-[#111827]">{name}</h3>
 
-        <div className="mt-1.5 flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <motion.div
-                key={i}
-                initial={false}
-                whileHover={{ scale: 1.2 }}
-                transition={{ type: "spring", stiffness: 400, damping: 15 }}
-              >
-                <Star
-                  className={`h-3.5 w-3.5 ${
-                    i < Math.round(rating)
-                      ? "fill-[#F59E0B] text-[#F59E0B]"
-                      : "fill-[#E5E7EB] text-[#E5E7EB]"
-                  }`}
-                />
-              </motion.div>
-            ))}
+        {productRating > 0 && productReviewCount > 0 ? (
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={false}
+                  whileHover={{ scale: 1.2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                >
+                  <Star
+                    className={`h-3.5 w-3.5 ${
+                      i < Math.round(productRating)
+                        ? "fill-[#F59E0B] text-[#F59E0B]"
+                        : "fill-[#E5E7EB] text-[#E5E7EB]"
+                    }`}
+                  />
+                </motion.div>
+              ))}
+            </div>
+            <span className="text-xs text-[#6B7280]">({productReviewCount})</span>
           </div>
-          <span className="text-xs text-[#6B7280]">({reviewCount})</span>
-        </div>
+        ) : (
+          <div className="mt-1.5 text-xs text-[#6B7280]">No ratings yet</div>
+        )}
 
         <p className="mt-2 text-base font-bold text-[#111827]">
           ${price.toLocaleString()}

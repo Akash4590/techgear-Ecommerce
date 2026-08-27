@@ -1,40 +1,29 @@
 import { Minus, Plus, Trash2, ArrowLeft, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useShop } from "./ShopContext";
-
 const CartContent = () => {
   const { cartItems, updateCartQuantity, removeFromCart } = useShop();
   const navigate = useNavigate();
-
   const discount = 50;
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
-
   const appliedDiscount = subtotal > 0 ? Math.min(discount, subtotal) : 0;
   const total = subtotal - appliedDiscount;
-
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        
-      {/* =====================================================
-          LEFT SIDE — CART ITEMS
-      ===================================================== */}
-
       <div className="lg:col-span-2">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          {/* Header row — ONLY visible from md up, matches body breakpoint */}
-          <div className="hidden md:grid md:grid-cols-[minmax(160px,1fr)_100px_140px_100px_60px] items-center border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-500">
+       
+   <div className="hidden md:grid md:grid-cols-[minmax(160px,1fr)_100px_140px_100px_60px] items-center border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-500">
             <span>Product</span>
             <span>Price</span>
             <span>Qty</span>
             <span>Total</span>
             <span>Action</span>
           </div>
-
-          {/* Cart Items */}
           {cartItems.length > 0 ? (
             cartItems.map(({ product, quantity }, index) => (
               <div
@@ -42,10 +31,7 @@ const CartContent = () => {
                 className={
                   index !== cartItems.length - 1
                     ? "border-b border-gray-100"
-                    : ""
-                }
-              >
-                {/* ============ MOBILE CARD LAYOUT (below md) ============ */}
+                    : "" }>
                 <div className="flex flex-col gap-4 px-4 py-5 sm:px-6 md:hidden">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-4 min-w-0">
@@ -119,65 +105,36 @@ const CartContent = () => {
                     </span>
                   </div>
                 </div>
-
-                {/* ============ DESKTOP / TABLET ROW LAYOUT (md and up) ============ */}
                 <div className="hidden md:grid md:grid-cols-[minmax(260px,1fr)_100px_140px_100px_60px] md:items-center px-6 py-5">
-                  {/* Product */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
-                      <img
-                        src={product.image}
-                        alt={product.imageAlt}
-                        className="h-full w-full object-contain p-2"
-                      />
-                    </div>
-
+                <img src={product.image} alt={product.imageAlt}
+                className="h-full w-full object-contain p-2"/>
+                  </div>
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-[#0B0B14]">
                         {product.name}
                       </p>
                       <p className="mt-1 text-sm text-gray-500">
-                        {product.category}
-                      </p>
+                        {product.category} </p>
                     </div>
                   </div>
-
-                  {/* Price */}
                   <div className="text-sm font-medium text-[#0B0B14]">
                     ${product.price.toLocaleString()}
                   </div>
-
-                  {/* Quantity */}
                   <div>
-                    <div className="flex w-fit items-center overflow-hidden rounded-lg border border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => updateCartQuantity(product._id, -1)}
-                        className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
-                      >
-                        <Minus size={14} />
-                      </button>
-
-                      <span className="flex h-9 w-9 items-center justify-center text-sm font-medium text-gray-700">
-                        {quantity}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => updateCartQuantity(product._id, 1)}
-                        className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Item Total */}
+           <div className="flex w-fit items-center overflow-hidden rounded-lg border border-gray-200">
+      <button type="button" onClick={() => updateCartQuantity(product._id, -1)}
+    className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]">
+                <Minus size={14} /></button>
+<span className="flex h-9 w-9 items-center justify-center text-sm font-medium text-gray-700">{quantity} </span>
+<button type="button"
+onClick={() => updateCartQuantity(product._id, 1)}
+ className="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#4F46E5]">
+  <Plus size={14} /> </button> </div> </div>
                   <div className="text-sm font-semibold text-[#0B0B14]">
                     ${(product.price * quantity).toLocaleString()}
                   </div>
-
-                  {/* Remove */}
                   <div>
                     <button
                       type="button"
@@ -228,10 +185,6 @@ const CartContent = () => {
           </button>
         )}
       </div>
-
-      {/* =====================================================
-          RIGHT SIDE — ORDER SUMMARY
-      ===================================================== */}
 
       <div className="lg:col-span-1">
         <div className="rounded-xl border border-gray-200 bg-white p-6">

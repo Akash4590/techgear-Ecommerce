@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
-import { products } from "../data/Products";
+import { API_BASE_URL } from "../config/api";
+import type { Product } from "../types/product";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/product-details/Breadcrumb";
 import ProductGallery from "../components/product-details/ProductGallery";
@@ -13,7 +15,90 @@ import Footer from "../components/Footer"
 
 const ProductDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const product = products.find((p) => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchProduct = async () => {
+      if (!id) {
+        setProduct(null);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Product not found");
+        }
+
+        const result: {
+          data?: Partial<Product> & {
+            _id?: string;
+            reviewCount?: number;
+            stockQuantity?: number;
+            discountPercent?: number;
+          };
+        } = await response.json();
+
+        if (!result.data?._id) {
+          throw new Error("Product not found");
+        }
+
+        setProduct({
+          ...result.data,
+          _id: result.data._id,
+          image: result.data.image ?? "/placeholder-product.png",
+          images: result.data.images?.length
+            ? result.data.images
+            : [result.data.image ?? "/placeholder-product.png"],
+          reviewsCount: result.data.reviewsCount ?? result.data.reviewCount ?? 0,
+          stock: result.data.stock ?? result.data.stockQuantity ?? 0,
+          discount: result.data.discount ?? result.data.discountPercent ?? 0,
+          brand: result.data.brand ?? "",
+          description: result.data.description ?? "",
+          price: result.data.price ?? 0,
+          category: result.data.category ?? "",
+          name: result.data.name ?? "",
+          rating: result.data.rating ?? 0,
+          isFeatured: result.data.isFeatured ?? false,
+          isDeal: result.data.isDeal ?? false,
+          createdAt: result.data.createdAt ?? "",
+          updatedAt: result.data.updatedAt ?? "",
+        });
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setProduct(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchProduct();
+
+    return () => controller.abort();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex min-h-[50vh] items-center justify-center text-gray-500">
+          Loading product...
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -37,6 +122,10 @@ const ProductDetailsPage = () => {
     );
   }
 
+  const galleryImages = Array.from({ length: 4 }, (_, index) =>
+    product.images[index] ?? product.image
+  );
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -44,18 +133,13 @@ const ProductDetailsPage = () => {
       <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-6">
         <Breadcrumb category={product.category} productName={product.name} />
 
-        {/* Zaroori: items-start + explicit column widths */}
+      
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-10 items-start">
 
-          {/* Left: Gallery */}
+          
           <div className="w-full max-w-[600px]">
            <ProductGallery
-               images={[
-                      product.image,
-                      product.image,
-                      product.image,
-                      product.image,
-                                      ]}
+               images={galleryImages}
               productName={product.name}/>
           </div>
 

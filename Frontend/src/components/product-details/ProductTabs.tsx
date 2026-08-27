@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Check, FileText } from "lucide-react";
-import type { Product } from "../../data/Products";
+import type { Product } from "../../types/product";
 
 interface ProductTabsProps {
   product: Product;
@@ -32,7 +32,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ product }) => {
                 : "text-gray-500 hover:text-gray-700"
             }`}>
             {tab.label}
-            {tab.id === "reviews" && ` (${product.reviewCount})`}
+            {tab.id === "reviews" && ` (${product.reviewsCount})`}
             {activeTab === tab.id && (
               <span className="absolute -bottom-[1px] left-0 h-[2px] w-full bg-[#4F46E5]" />
             )}
@@ -106,7 +106,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ product }) => {
                 { label: "Category", value: product.category },
                 { label: "Price", value: `$${product.price.toLocaleString()}` },
                 { label: "Rating", value: `${product.rating.toFixed(1)} / 5.0` },
-                { label: "Reviews", value: `${product.reviewCount} reviews` },
+                { label: "Reviews", value: `${product.reviewsCount} reviews` },
                 { label: "Availability", value: product.inStock === false ? "Out of Stock" : "In Stock" },
               ].map((spec) => (
                 <div key={spec.label} className="flex items-center justify-between px-4 py-3 text-sm">
@@ -123,7 +123,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ product }) => {
             <p className="text-sm text-gray-500">
               This product has an average rating of{" "}
               <span className="font-semibold text-[#0B0B14]">{product.rating.toFixed(1)}</span> based
-              on <span className="font-semibold text-[#0B0B14]">{product.reviewCount}</span> reviews.
+              on <span className="font-semibold text-[#0B0B14]">{product.reviewsCount}</span> reviews.
             </p>
             <p className="text-sm text-gray-400 italic mt-3">
               Individual review details are not available yet.

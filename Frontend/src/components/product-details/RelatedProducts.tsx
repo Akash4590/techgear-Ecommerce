@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { products } from "../../data/Products";
-import type { Product } from "../../data/Products";
+import { API_BASE_URL } from "../../config/api";
+import type { Product } from "../../types/product";
 import ProductCard from "../shop/ProductCard";
 
 interface RelatedProductsProps {
@@ -10,12 +10,38 @@ interface RelatedProductsProps {
 }
 
 const RelatedProducts: React.FC<RelatedProductsProps> = ({ currentProduct }) => {
-  // Same category ke products nikaalo, current product ko exclude karke
-  const relatedProducts = products
-    .filter(
-      (p) => p.category === currentProduct.category && p.id !== currentProduct.id
-    )
-    .slice(0, 5);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchRelatedProducts = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/products`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const result: { data?: Product[] } = await response.json();
+        setRelatedProducts(
+          (result.data ?? [])
+            .filter(
+              (product) =>
+                product.category === currentProduct.category &&
+                product._id !== currentProduct._id
+            )
+            .slice(0, 5)
+        );
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setRelatedProducts([]);
+        }
+      }
+    };
+
+    void fetchRelatedProducts();
+    return () => controller.abort();
+  }, [currentProduct._id, currentProduct.category]);
 
   if (relatedProducts.length === 0) return null;
 
@@ -34,7 +60,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ currentProduct }) => 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         {relatedProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
     </div>

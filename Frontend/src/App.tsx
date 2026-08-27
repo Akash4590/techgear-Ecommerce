@@ -23,12 +23,11 @@ import AdminDealsPage from "./pages/AdminDealsPage";
 const App = () => {
   return (
     <Routes>
-
-      <Route path="/signup" element={<SignupPage />} />
-      <Route path="/login" element={<LoginPage />} />
+    <Route path="/signup" element={<SignupPage />} />
+    <Route path="/login" element={<LoginPage />} />
     <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
      <Route path="/reset-password" element={<ResetPassword />}/>
-      <Route path="/" element={<Home />} />
+    <Route path="/" element={<Home />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/wishlist" element={<WishlistPage />} />

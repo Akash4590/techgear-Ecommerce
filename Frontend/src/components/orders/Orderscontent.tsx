@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package,
@@ -10,15 +10,82 @@ import {
   MapPin,
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
+import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config/api";
 
 const OrdersContent = () => {
-  const { orders } = useShop();
+  const { orders: localOrders } = useShop();
+  const { authFetch } = useAuth();
   const navigate = useNavigate();
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [orders, setOrders] = useState(localOrders);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/orders/my-orders`);
+        if (!response.ok) return;
+
+        const result = await response.json();
+        setOrders(
+          (result.data ?? []).map((order: any) => ({
+            orderId: `#${order._id.slice(-8).toUpperCase()}`,
+            orderDate: new Date(order.createdAt).toLocaleString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+            paymentMethod: order.paymentMethod,
+            deliveryMethod: "standard",
+            shipping: {
+              firstName: order.shippingAddress.fullName.split(" ")[0] ?? "",
+              lastName: order.shippingAddress.fullName.split(" ").slice(1).join(" "),
+              address: order.shippingAddress.address,
+              apartment: "",
+              city: order.shippingAddress.city,
+              state: "",
+              zip: order.shippingAddress.postalCode,
+              country: "",
+              phone: order.shippingAddress.phone,
+              email: "",
+            },
+            items: order.items.map((item: any) => ({
+              quantity: item.quantity,
+              product: {
+                _id: item.productId,
+                name: item.name,
+                image: item.image,
+                imageAlt: item.name,
+                price: item.price,
+              },
+            })),
+            subtotal: order.totalAmount,
+            discount: 0,
+            shippingCost: 0,
+            total: order.totalAmount,
+            status: order.status,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchOrders();
+  }, [authFetch]);
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
   };
+
+  if (loading) {
+    return <div className="py-20 text-center text-gray-500">Loading orders...</div>;
+  }
 
   if (orders.length === 0) {
     return (

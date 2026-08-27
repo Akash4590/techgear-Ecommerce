@@ -21,6 +21,7 @@ import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useShop } from "../context/ShopContext";
 import { API_BASE_URL } from "../config/api";
+import OrdersContent from "../components/orders/Orderscontent";
 
 type TabId = "profile" | "orders" | "wishlist" | "settings";
 
@@ -110,7 +111,7 @@ const AccountPage = () => {
                     navigate={navigate}
                   />
                 )}
-                {activeTab === "orders" && <OrdersTab key="orders" navigate={navigate} />}
+                {activeTab === "orders" && <OrdersContent key="orders" />}
                 {activeTab === "wishlist" && (
                   <WishlistTab key="wishlist" wishlistItems={wishlistItems} navigate={navigate} />
                 )}
