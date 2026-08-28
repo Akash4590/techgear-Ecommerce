@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Percent,
   AlertCircle,
   Tag,
   Clock,
@@ -22,11 +21,6 @@ interface DealProduct {
   dealExpiresAt?: string;
   inStock: boolean;
 }
-
-// =========================
-// TIME LEFT HELPER
-// =========================
-
 interface TimeLeft {
   label: string;
   urgent: boolean;
@@ -86,7 +80,7 @@ const AdminDealsPage = () => {
   const [error, setError] = useState("");
   const [removeTarget, setRemoveTarget] = useState<DealProduct | null>(null);
   const [removing, setRemoving] = useState(false);
-  const [, forceTick] = useState(0);
+  const [,forceTick] = useState(0);
 
   const fetchDeals = async () => {
     setLoading(true);
@@ -110,7 +104,7 @@ const AdminDealsPage = () => {
     if (token) fetchDeals();
   }, [token]);
 
-  // Countdown labels ko har minute refresh karne ke liye — koi extra API call nahi
+  
   useEffect(() => {
     const interval = setInterval(() => forceTick((t) => t + 1), 60_000);
     return () => clearInterval(interval);
@@ -216,8 +210,7 @@ const AdminDealsPage = () => {
                   <ProductThumb src={deal.image} alt={deal.imageAlt} />
 
                   <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#4F46E5] px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-                    <Percent size={11} />
-                    {deal.discountPercent}% OFF
+                    {Math.round(Number(deal.discountPercent))}% OFF
                   </span>
 
                   <button

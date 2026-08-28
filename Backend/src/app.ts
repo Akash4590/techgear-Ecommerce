@@ -2,21 +2,25 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
-
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-
+import paymentRoutes from "./routes/paymentRoutes.js";
+import { stripeWebhook } from "./payments/stripeWebhook.js";
 
 const app = express();
 
-// CORS
+
 app.use(cors());
 
-// JSON body parser
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
 app.use(express.json());
 
-// Test route
+
 app.get("/", (_req: Request, res: Response) => {
   res.json({
     success: true,
@@ -24,12 +28,10 @@ app.get("/", (_req: Request, res: Response) => {
   });
 });
 
-// Auth routes
 app.use("/api/auth", authRoutes);
-
-// Product routes
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
 export default app;

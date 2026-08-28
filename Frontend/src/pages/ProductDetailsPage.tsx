@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-
 import { API_BASE_URL } from "../config/api";
 import type { Product } from "../types/product";
 import Navbar from "../components/Navbar";

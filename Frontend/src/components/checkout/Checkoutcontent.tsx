@@ -13,21 +13,15 @@ import {
 import { useShop } from "../../context/ShopContext";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config/api";
+import StripeCardForm from "./StripeCardForm";
 
 type DeliveryMethod = "standard" | "express";
 type PaymentMethod = "card" | "paypal" | "applepay" | "googlepay";
 
-const CART_WIDE_DISCOUNT_PERCENT = 10; // Store-wide extra discount %
+const CART_WIDE_DISCOUNT_PERCENT = 10;
 
 const stateOptionsByCountry: Record<string, string[]> = {
-  "United States": [
-    "California",
-    "New York",
-    "Texas",
-    "Florida",
-    "Illinois",
-    "Washington",
-  ],
+  "United States": ["California", "New York", "Texas", "Florida", "Illinois", "Washington"],
   Canada: ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba"],
   "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
   Pakistan: [
@@ -62,6 +56,10 @@ const CheckoutContent = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Naya: Stripe payment state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [showCardForm, setShowCardForm] = useState(false);
+
   const availableStates = country ? stateOptionsByCountry[country] ?? [] : [];
 
   const handleCountryChange = (value: string) => {
@@ -78,7 +76,6 @@ const CheckoutContent = () => {
 
   const expressShippingCost = 12.99;
 
-  // Naya: har product ki effective price (agar deal hai to discounted price)
   const getEffectivePrice = (product: (typeof cartItems)[0]["product"]) => {
     if (product.isDeal && product.discountPercent) {
       return product.price - (product.price * product.discountPercent) / 100;
@@ -86,13 +83,11 @@ const CheckoutContent = () => {
     return product.price;
   };
 
-  // Subtotal — sab items ki effective (deal-adjusted) price ka total
   const subtotal = cartItems.reduce(
     (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
     0
   );
 
-  // Cart-wide discount sirf un items par jo pehle se deal mein NAHI hain
   const nonDealSubtotal = cartItems.reduce((sum, item) => {
     if (item.product.isDeal) return sum;
     return sum + item.product.price * item.quantity;
@@ -104,19 +99,11 @@ const CheckoutContent = () => {
   const shippingCost = deliveryMethod === "express" ? expressShippingCost : 0;
   const total = subtotal - appliedDiscount + shippingCost;
 
+  // Naya: Step 1 — validation + (agar card hai to) PaymentIntent banao
   const handlePlaceOrder = async () => {
     setError("");
 
-    if (
-      !email ||
-      !firstName ||
-      !lastName ||
-      !address ||
-      !city ||
-      !state ||
-      !zip ||
-      !country
-    ) {
+    if (!email || !firstName || !lastName || !address || !city || !state || !zip || !country) {
       setError("Please fill in all required fields before placing your order.");
       return;
     }
@@ -126,6 +113,41 @@ const CheckoutContent = () => {
       return;
     }
 
+    if (paymentMethod === "card") {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/payments/create-intent`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ amount: total }),
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          setError(data.message || "Failed to initialize payment");
+          return;
+        }
+
+        setClientSecret(data.clientSecret);
+        setShowCardForm(true);
+      } catch {
+        setError("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Non-card methods (PayPal/Apple/Google Pay — abhi placeholder), seedha order banao
+    await finalizeOrder();
+  };
+
+  // Naya: Step 2 — payment confirm hone ke baad (ya non-card ke liye) order create karo
+  const finalizeOrder = async (paymentIntentId?: string) => {
+    setError("");
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/orders`, {
@@ -151,6 +173,7 @@ const CheckoutContent = () => {
             phone,
           },
           paymentMethod: paymentMethodLabels[paymentMethod],
+          paymentIntentId,
         }),
       });
 
@@ -176,18 +199,7 @@ const CheckoutContent = () => {
           orderDate,
           paymentMethod: paymentMethodLabels[paymentMethod],
           deliveryMethod,
-          shipping: {
-            firstName,
-            lastName,
-            address,
-            apartment,
-            city,
-            state,
-            zip,
-            country,
-            phone,
-            email,
-          },
+          shipping: { firstName, lastName, address, apartment, city, state, zip, country, phone, email },
           items: cartItems,
           subtotal,
           discount: appliedDiscount,
@@ -212,14 +224,9 @@ const CheckoutContent = () => {
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-semibold text-white">
                 1
               </span>
-              <h2 className="text-base font-bold text-[#0B0B14]">
-                Contact Information
-              </h2>
+              <h2 className="text-base font-bold text-[#0B0B14]">Contact Information</h2>
             </div>
-            <button
-              type="button"
-              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer"
-            >
+            <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
               <Pencil size={14} />
               Edit
             </button>
@@ -227,9 +234,7 @@ const CheckoutContent = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                Email Address
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">Email Address</label>
               <div className="relative">
                 <input
                   type="email"
@@ -238,17 +243,12 @@ const CheckoutContent = () => {
                   placeholder="john.doe@example.com"
                   className="w-full rounded-lg border border-gray-200 px-4 py-2.5 pr-10 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
                 />
-                <CheckCircle2
-                  size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500"
-                />
+                <CheckCircle2 size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                Phone Number
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">Phone Number</label>
               <div className="relative">
                 <input
                   type="tel"
@@ -257,10 +257,7 @@ const CheckoutContent = () => {
                   placeholder="+1 (555) 123-4567"
                   className="w-full rounded-lg border border-gray-200 px-4 py-2.5 pr-10 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
                 />
-                <CheckCircle2
-                  size={18}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500"
-                />
+                <CheckCircle2 size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
               </div>
             </div>
           </div>
@@ -273,14 +270,9 @@ const CheckoutContent = () => {
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-semibold text-white">
                 2
               </span>
-              <h2 className="text-base font-bold text-[#0B0B14]">
-                Shipping Address
-              </h2>
+              <h2 className="text-base font-bold text-[#0B0B14]">Shipping Address</h2>
             </div>
-            <button
-              type="button"
-              className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer"
-            >
+            <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
               <Pencil size={14} />
               Edit
             </button>
@@ -288,9 +280,7 @@ const CheckoutContent = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                First Name
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">First Name</label>
               <input
                 type="text"
                 value={firstName}
@@ -301,9 +291,7 @@ const CheckoutContent = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                Last Name
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">Last Name</label>
               <input
                 type="text"
                 value={lastName}
@@ -314,9 +302,7 @@ const CheckoutContent = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                Address
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">Address</label>
               <input
                 type="text"
                 value={address}
@@ -327,9 +313,7 @@ const CheckoutContent = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                Apartment, suite, etc. (optional)
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">Apartment, suite, etc. (optional)</label>
               <input
                 type="text"
                 value={apartment}
@@ -340,9 +324,7 @@ const CheckoutContent = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                City
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">City</label>
               <input
                 type="text"
                 value={city}
@@ -354,9 +336,7 @@ const CheckoutContent = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  State / Province
-                </label>
+                <label className="block text-xs text-gray-500 mb-1.5">State / Province</label>
                 <select
                   value={state}
                   onChange={(e) => setState(e.target.value)}
@@ -375,9 +355,7 @@ const CheckoutContent = () => {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  ZIP / Postal Code
-                </label>
+                <label className="block text-xs text-gray-500 mb-1.5">ZIP / Postal Code</label>
                 <input
                   type="text"
                   value={zip}
@@ -389,9 +367,7 @@ const CheckoutContent = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
-                Country
-              </label>
+              <label className="block text-xs text-gray-500 mb-1.5">Country</label>
               <select
                 value={country}
                 onChange={(e) => handleCountryChange(e.target.value)}
@@ -416,12 +392,9 @@ const CheckoutContent = () => {
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-semibold text-white">
                 3
               </span>
-              <h2 className="text-base font-bold text-[#0B0B14]">
-                Delivery Method
-              </h2>
+              <h2 className="text-base font-bold text-[#0B0B14]">Delivery Method</h2>
             </div>
-            <button type="button"
-    className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
+            <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
               <Pencil size={14} />
               Edit
             </button>
@@ -432,33 +405,23 @@ const CheckoutContent = () => {
               type="button"
               onClick={() => setDeliveryMethod("standard")}
               className={`cursor-pointer flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
-                deliveryMethod === "standard"
-                  ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
-                  : "border-gray-200 hover:border-gray-300"
+                deliveryMethod === "standard" ? "border-[#4F46E5] ring-1 ring-[#4F46E5]" : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <span
                 className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                  deliveryMethod === "standard"
-                    ? "border-[#4F46E5]"
-                    : "border-gray-300"
+                  deliveryMethod === "standard" ? "border-[#4F46E5]" : "border-gray-300"
                 }`}
               >
-                {deliveryMethod === "standard" && (
-                  <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
-                )}
+                {deliveryMethod === "standard" && <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />}
               </span>
 
               <Truck size={18} className="text-gray-500 mt-0.5" />
 
               <div>
-                <p className="text-sm font-semibold text-[#0B0B14]">
-                  Standard Shipping
-                </p>
+                <p className="text-sm font-semibold text-[#0B0B14]">Standard Shipping</p>
                 <p className="text-sm font-medium text-green-600">Free</p>
-                <p className="text-xs text-gray-400">
-                  Delivery in 5-7 business days
-                </p>
+                <p className="text-xs text-gray-400">Delivery in 5-7 business days</p>
               </div>
             </button>
 
@@ -466,35 +429,23 @@ const CheckoutContent = () => {
               type="button"
               onClick={() => setDeliveryMethod("express")}
               className={` cursor-pointer flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
-                deliveryMethod === "express"
-                  ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
-                  : "border-gray-200 hover:border-gray-300"
+                deliveryMethod === "express" ? "border-[#4F46E5] ring-1 ring-[#4F46E5]" : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <span
                 className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                  deliveryMethod === "express"
-                    ? "border-[#4F46E5]"
-                    : "border-gray-300"
+                  deliveryMethod === "express" ? "border-[#4F46E5]" : "border-gray-300"
                 }`}
               >
-                {deliveryMethod === "express" && (
-                  <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
-                )}
+                {deliveryMethod === "express" && <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />}
               </span>
 
-               <Truck size={18} className="text-gray-500 mt-0.5" />
+              <Truck size={18} className="text-gray-500 mt-0.5" />
 
               <div>
-                <p className="text-sm font-semibold text-[#0B0B14]">
-                  Express Shipping
-                </p>
-                <p className="text-sm font-medium text-[#0B0B14]">
-                  ${expressShippingCost.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-400">
-                  Delivery in 2-3 business days
-                </p>
+                <p className="text-sm font-semibold text-[#0B0B14]">Express Shipping</p>
+                <p className="text-sm font-medium text-[#0B0B14]">${expressShippingCost.toFixed(2)}</p>
+                <p className="text-xs text-gray-400">Delivery in 2-3 business days</p>
               </div>
             </button>
           </div>
@@ -506,100 +457,84 @@ const CheckoutContent = () => {
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5] text-xs font-semibold text-white">
               4
             </span>
-            <h2 className="text-base font-bold text-[#0B0B14]">
-              Payment Method
-            </h2>
+            <h2 className="text-base font-bold text-[#0B0B14]">Payment Method</h2>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <button
               type="button"
-              onClick={() => setPaymentMethod("card")}
+              onClick={() => {
+                setPaymentMethod("card");
+                setShowCardForm(false);
+                setClientSecret(null);
+              }}
               className={`col-span-2 flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors ${
-                paymentMethod === "card"
-                  ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
-                  : "border-gray-200 hover:border-gray-300"
+                paymentMethod === "card" ? "border-[#4F46E5] ring-1 ring-[#4F46E5]" : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <div className="flex items-center gap-2 cursor-pointer">
                 <span
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                    paymentMethod === "card"
-                      ? "border-[#4F46E5]"
-                      : "border-gray-300"
+                    paymentMethod === "card" ? "border-[#4F46E5]" : "border-gray-300"
                   }`}
                 >
-                  {paymentMethod === "card" && (
-                    <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
-                  )}
+                  {paymentMethod === "card" && <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />}
                 </span>
                 <CreditCard size={18} className="text-gray-500" />
-                <span className="text-sm font-semibold text-[#0B0B14]">
-                  Credit / Debit Card
-                </span>
+                <span className="text-sm font-semibold text-[#0B0B14]">Credit / Debit Card</span>
               </div>
               <div className="flex items-center gap-2 pl-6 cursor-pointer">
-                <div className="rounded border border-gray-200 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  VISA
-                </div>
+                <div className="rounded border border-gray-200 px-2 py-0.5 text-[10px] font-bold text-blue-700">VISA</div>
                 <div className="rounded border border-gray-200 px-2 py-0.5">
                   <div className="flex -space-x-1">
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-orange-400" />
                   </div>
                 </div>
-                <div className="rounded border border-gray-200 px-2 py-0.5 text-[10px] font-bold text-blue-900">
-                  AMEX
-                </div>
+                <div className="rounded border border-gray-200 px-2 py-0.5 text-[10px] font-bold text-blue-900">AMEX</div>
               </div>
             </button>
 
             <button
               type="button"
-              onClick={() => setPaymentMethod("paypal")}
+              onClick={() => {
+                setPaymentMethod("paypal");
+                setShowCardForm(false);
+                setClientSecret(null);
+              }}
               className={`flex items-center gap-2 rounded-lg border p-4 transition-colors ${
-                paymentMethod === "paypal"
-                  ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
-                  : "border-gray-200 hover:border-gray-300"
+                paymentMethod === "paypal" ? "border-[#4F46E5] ring-1 ring-[#4F46E5]" : "border-gray-200 hover:border-gray-300"
               }`}
             >
-        <span className={`flex h-4 w-4 shrink-0 items-center justify-center cursor pointer rounded-full border-2 ${
-                  paymentMethod === "paypal"
-                    ? "border-[#4F46E5]"
-                    : "border-gray-300"
-                }`}>
-                {paymentMethod === "paypal" && (
-                  <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
-                )}
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center cursor pointer rounded-full border-2 ${
+                  paymentMethod === "paypal" ? "border-[#4F46E5]" : "border-gray-300"
+                }`}
+              >
+                {paymentMethod === "paypal" && <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />}
               </span>
-              <span className="text-sm font-semibold text-blue-800 cursor-pointer">
-                PayPal
-              </span>
+              <span className="text-sm font-semibold text-blue-800 cursor-pointer">PayPal</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setPaymentMethod("applepay")}
+              onClick={() => {
+                setPaymentMethod("applepay");
+                setShowCardForm(false);
+                setClientSecret(null);
+              }}
               className={`flex items-center gap-2 rounded-lg border p-4  transition-colors ${
-                paymentMethod === "applepay"
-                  ? "border-[#4F46E5] ring-1 ring-[#4F46E5]"
-                  : "border-gray-200 hover:border-gray-300"
+                paymentMethod === "applepay" ? "border-[#4F46E5] ring-1 ring-[#4F46E5]" : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                  paymentMethod === "applepay"
-                    ? "border-[#4F46E5]"
-                    : "border-gray-300"
+                  paymentMethod === "applepay" ? "border-[#4F46E5]" : "border-gray-300"
                 }`}
               >
-                {paymentMethod === "applepay" && (
-                  <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
-                )}
+                {paymentMethod === "applepay" && <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />}
               </span>
-              <span className="text-sm font-semibold text-[#0B0B14] cursor-pointer">
-                 Google Pay
-              </span>
+              <span className="text-sm font-semibold text-[#0B0B14] cursor-pointer"> Google Pay</span>
             </button>
           </div>
 
@@ -614,18 +549,29 @@ const CheckoutContent = () => {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={handlePlaceOrder}
-            disabled={loading}
-            className="mt-5 flex w-full items-center justify-between rounded-lg bg-[#4F46E5] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <span className="flex items-center gap-2">
-              <Lock size={16} />
-              {loading ? "Placing Order..." : "Place Order"}
-            </span>
-            <span>${total.toFixed(2)}</span>
-          </button>
+          {/* Naya: agar card payment intent ban chuki hai, Stripe form dikhao */}
+          {showCardForm && clientSecret ? (
+            <StripeCardForm
+              clientSecret={clientSecret}
+              loading={loading}
+              setLoading={setLoading}
+              onSuccess={(paymentIntentId) => finalizeOrder(paymentIntentId)}
+              onError={(msg) => setError(msg)}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={handlePlaceOrder}
+              disabled={loading}
+              className="mt-5 flex w-full items-center justify-between rounded-lg bg-[#4F46E5] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <span className="flex items-center gap-2">
+                <Lock size={16} />
+                {loading ? "Processing..." : "Place Order"}
+              </span>
+              <span>${total.toFixed(2)}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -633,18 +579,14 @@ const CheckoutContent = () => {
       <div className="lg:col-span-1">
         <div className="rounded-xl border border-gray-200 bg-white p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-[#0B0B14]">
-              Order Summary
-            </h2>
+            <h2 className="text-lg font-bold text-[#0B0B14]">Order Summary</h2>
           </div>
 
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500">
               {cartItems.length} {cartItems.length === 1 ? "Item" : "Items"} in Cart
             </p>
-            <button
-              type="button"
-            className="text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
+            <button type="button" className="text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] cursor-pointer">
               Edit Cart
             </button>
           </div>
@@ -653,21 +595,13 @@ const CheckoutContent = () => {
             {cartItems.map(({ product, quantity }) => (
               <div key={product._id} className="flex items-start gap-3">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
-                  <img
-                    src={product.image}
-                    alt={product.imageAlt}
-                    className="h-full w-full object-contain p-1.5"
-                  />
+                  <img src={product.image} alt={product.imageAlt} className="h-full w-full object-contain p-1.5" />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#0B0B14]">
-                    {product.name}
-                  </p>
+                  <p className="truncate text-sm font-semibold text-[#0B0B14]">{product.name}</p>
                   {product.colors && product.colors.length > 0 && (
-                    <p className="text-xs text-gray-400">
-                      {product.colors[0].name}
-                    </p>
+                    <p className="text-xs text-gray-400">{product.colors[0].name}</p>
                   )}
                   <p className="text-xs text-gray-400">Qty: {quantity}</p>
                 </div>
@@ -688,33 +622,21 @@ const CheckoutContent = () => {
                 Subtotal ({cartItems.length} {cartItems.length === 1 ? "item" : "items"})
               </span>
               <span className="font-medium text-[#0B0B14]">
-                ${subtotal.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-gray-500">Shipping</span>
-              <span
-                className={`font-medium ${
-                  shippingCost === 0 ? "text-green-600" : "text-[#0B0B14]"
-                }`}
-              >
+              <span className={`font-medium ${shippingCost === 0 ? "text-green-600" : "text-[#0B0B14]"}`}>
                 {shippingCost === 0 ? "Free" : `$${shippingCost.toFixed(2)}`}
               </span>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-gray-500">
-                Discount ({CART_WIDE_DISCOUNT_PERCENT}% off non-deal items)
-              </span>
+              <span className="text-gray-500">Discount ({CART_WIDE_DISCOUNT_PERCENT}% off non-deal items)</span>
               <span className="font-medium text-green-600">
-                -${appliedDiscount.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                -${appliedDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -722,13 +644,9 @@ const CheckoutContent = () => {
           <div className="mt-4 border-t border-gray-100 pt-4">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[#0B0B14]">Total</span>
-              <span className="text-xl font-bold text-[#0B0B14]">
-                ${total.toFixed(2)}
-              </span>
+              <span className="text-xl font-bold text-[#0B0B14]">${total.toFixed(2)}</span>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Taxes calculated at checkout
-            </p>
+            <p className="mt-1 text-xs text-gray-400">Taxes calculated at checkout</p>
           </div>
         </div>
 
@@ -738,9 +656,7 @@ const CheckoutContent = () => {
               <ShieldCheck size={16} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#0B0B14]">
-                Secure Checkout
-              </p>
+              <p className="text-sm font-semibold text-[#0B0B14]">Secure Checkout</p>
               <p className="text-xs text-gray-400">100% secure payment</p>
             </div>
           </div>
@@ -750,9 +666,7 @@ const CheckoutContent = () => {
               <RotateCcw size={16} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#0B0B14]">
-                30-Day Returns
-              </p>
+              <p className="text-sm font-semibold text-[#0B0B14]">30-Day Returns</p>
               <p className="text-xs text-gray-400">Hassle-free returns</p>
             </div>
           </div>
@@ -762,37 +676,25 @@ const CheckoutContent = () => {
               <Award size={16} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#0B0B14]">
-                1 Year Warranty
-              </p>
+              <p className="text-sm font-semibold text-[#0B0B14]">1 Year Warranty</p>
               <p className="text-xs text-gray-400">Official warranty</p>
             </div>
           </div>
         </div>
 
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
-          <p className="text-sm font-semibold text-[#0B0B14] mb-3">
-            We Accept
-          </p>
+          <p className="text-sm font-semibold text-[#0B0B14] mb-3">We Accept</p>
           <div className="flex items-center gap-2">
-            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-blue-700">
-              VISA
-            </div>
+            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-blue-700">VISA</div>
             <div className="rounded border border-gray-200 px-2.5 py-1.5">
               <div className="flex -space-x-1">
                 <span className="inline-block h-3 w-3 rounded-full bg-red-500" />
                 <span className="inline-block h-3 w-3 rounded-full bg-orange-400" />
               </div>
             </div>
-            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-blue-800">
-              PayPal
-            </div>
-            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-[#0B0B14]">
-               Pay
-            </div>
-            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-[#0B0B14]">
-              G Pay
-            </div>
+            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-blue-800">PayPal</div>
+            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-[#0B0B14]"> Pay</div>
+            <div className="rounded border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-[#0B0B14]">G Pay</div>
           </div>
         </div>
       </div>
