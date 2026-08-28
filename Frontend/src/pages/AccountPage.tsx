@@ -15,6 +15,7 @@ import {
   Trash2,
   AlertTriangle,
   X,
+  Camera,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -34,7 +35,7 @@ const tabs: { id: TabId; label: string; icon: typeof User }[] = [
 
 const AccountPage = () => {
   const navigate = useNavigate();
-  const { user, token, logout, updateUser } = useAuth();
+  const { user, token, logout, updateUser, authFetch } = useAuth();
   const { wishlistItems, cartItems } = useShop();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
 
@@ -52,8 +53,12 @@ const AccountPage = () => {
 
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#4F46E5] text-white text-xl font-bold">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#4F46E5] text-white text-xl font-bold">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={`${user.name}'s avatar`} className="h-full w-full object-cover" />
+              ) : (
+                user?.name?.charAt(0).toUpperCase() || "U"
+              )}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[#0B0B14]">{user?.name || "User"}</h1>
@@ -121,6 +126,7 @@ const AccountPage = () => {
                     user={user}
                     token={token}
                     updateUser={updateUser}
+                    authFetch={authFetch}
                     logout={logout}
                     navigate={navigate}
                   />
@@ -275,7 +281,7 @@ const WishlistTab = ({ wishlistItems, navigate }: any) => (
 );
 
 // ---------- Settings Tab ----------
-const SettingsTab = ({ user, token, updateUser, logout, navigate }: any) => {
+const SettingsTab = ({ user, token, updateUser, authFetch, logout, navigate }: any) => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -286,6 +292,53 @@ const SettingsTab = ({ user, token, updateUser, logout, navigate }: any) => {
   const [loading, setLoading] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(user?.emailNotifications ?? true);
   const [deletePassword, setDeletePassword] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Choose an image smaller than 5 MB" });
+      e.target.value = "";
+      return;
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+    setMessage({ type: "", text: "" });
+  };
+
+  const handleAvatarSave = async () => {
+    if (!avatarFile) return;
+
+    setAvatarLoading(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
+      const res = await authFetch(`${API_BASE_URL}/auth/avatar`, {
+        method: "PUT",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setMessage({ type: "error", text: data.message || "Failed to update avatar" });
+        return;
+      }
+
+      updateUser({ ...user, avatar: data.data.avatar });
+      setAvatarFile(null);
+      setMessage({ type: "success", text: "Avatar updated successfully" });
+    } catch {
+      setMessage({ type: "error", text: "Failed to update avatar. Try again." });
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
  const handleChangePassword = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -391,6 +444,40 @@ if (newPassword.length < 5) {
       )}
 
       <div className="space-y-1">
+        {/* Profile image */}
+        <div className="flex items-center justify-between gap-4 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#4F46E5] text-lg font-bold text-white">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
+              ) : (
+                user?.name?.charAt(0).toUpperCase() || "U"
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[#0B0B14]">Profile photo</p>
+              <p className="text-xs text-gray-500">JPG, PNG, or WebP up to 5 MB</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <Camera size={15} />
+              Choose
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarSelect} className="hidden" />
+            </label>
+            {avatarFile && (
+              <button
+                type="button"
+                onClick={handleAvatarSave}
+                disabled={avatarLoading}
+                className="rounded-lg bg-[#4F46E5] px-3 py-2 text-sm font-medium text-white hover:bg-[#4338CA] disabled:opacity-60"
+              >
+                {avatarLoading ? "Saving..." : "Save"}
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Change Password */}
         <div className="py-4 border-b border-gray-100">
           <div className="flex items-center justify-between">

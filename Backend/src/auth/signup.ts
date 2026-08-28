@@ -42,6 +42,7 @@ export const signup = async (req: Request, res: Response) => {
           id: existingUser._id,
           name: existingUser.name,
           email: existingUser.email,
+          avatar: existingUser.avatar,
         },
       });
     }
@@ -58,6 +59,7 @@ export const signup = async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
       },
     });
   } catch (error) {

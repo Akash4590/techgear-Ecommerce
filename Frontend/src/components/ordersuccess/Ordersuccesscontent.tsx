@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { assets } from "../../assets/assets";
 import type { CartItem } from "../../context/ShopContext";
+import { useOrderStatus } from "../../hooks/useOrderStatus";
 
 interface ShippingInfo {
   firstName: string;
@@ -38,7 +39,17 @@ interface OrderData {
   discount: number;
   shippingCost: number;
   total: number;
+  status?: string; // Naya: backend se initial status
 }
+
+// Naya: raw status string ko UI ke deliverySteps ke against map karta hai
+const STATUS_STEP_INDEX: Record<string, number> = {
+  pending: 0,
+  processing: 1,
+  shipped: 2,
+  delivered: 3,
+  cancelled: -1,
+};
 
 const OrderSuccessContent = () => {
   const navigate = useNavigate();
@@ -61,6 +72,13 @@ const OrderSuccessContent = () => {
     total,
   } = orderData;
 
+  // Naya: MongoDB ka real _id chahiye socket room match karne ke liye — orderId "#XXXXXXXX" hai (display ke liye),
+  // isliye humne CheckoutContent se raw id bhi bhejni hogi (neeche note dekho)
+  const rawOrderId = (orderData as any).rawOrderId || orderId.replace("#", "");
+
+  // Naya: real-time status track karo, initial value backend se ya "pending"
+  const liveStatus = useOrderStatus(rawOrderId, orderData.status || "pending");
+
   const estimatedStart = new Date();
   estimatedStart.setDate(estimatedStart.getDate() + 4);
   const estimatedEnd = new Date();
@@ -71,18 +89,27 @@ const OrderSuccessContent = () => {
     year: "numeric",
   });
 
+  // Naya: deliverySteps ab liveStatus ke hisab se dynamically "done" calculate karta hai
+  const currentStepIndex = STATUS_STEP_INDEX[liveStatus] ?? 0;
+
   const deliverySteps = [
-    { label: "Order Confirmed", date: orderDate, done: true },
-    { label: "Processing", date: orderDate, done: true },
+    { label: "Order Confirmed", date: orderDate, done: currentStepIndex >= 0 },
+    { label: "Processing", date: orderDate, done: currentStepIndex >= 1 },
     {
       label: "Shipped",
-      date: `Expected ${dateFormatter.format(estimatedStart)}`,
-      done: false,
+      date:
+        currentStepIndex >= 2
+          ? "Shipped"
+          : `Expected ${dateFormatter.format(estimatedStart)}`,
+      done: currentStepIndex >= 2,
     },
     {
       label: "Delivered",
-      date: `Expected ${dateFormatter.format(estimatedEnd)}`,
-      done: false,
+      date:
+        currentStepIndex >= 3
+          ? "Delivered"
+          : `Expected ${dateFormatter.format(estimatedEnd)}`,
+      done: currentStepIndex >= 3,
     },
   ];
 
@@ -194,6 +221,19 @@ const OrderSuccessContent = () => {
                   <span className="text-gray-500">Total Amount</span>
                   <span className="font-semibold text-green-600">
                     ${total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Naya: Live status row */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-[#4F46E5]">
+                  <Truck size={15} />
+                </div>
+                <div className="flex-1 flex items-center justify-between">
+                  <span className="text-gray-500">Status</span>
+                  <span className="font-semibold text-[#0B0B14] capitalize">
+                    {liveStatus}
                   </span>
                 </div>
               </div>
@@ -337,7 +377,7 @@ const OrderSuccessContent = () => {
 
             <div className="space-y-4 mb-5">
               {items.map(({ product, quantity }) => (
-                <div key={product.id} className="flex items-start gap-3">
+                <div key={product._id} className="flex items-start gap-3">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
                     <img
                       src={product.image}

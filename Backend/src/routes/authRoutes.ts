@@ -7,7 +7,9 @@ import { resetPassword } from "../auth/resetPassword.js";
 import { changePassword } from "../auth/changePassword.js";
 import { deleteAccount } from "../auth/deleteAccount.js";
 import { updatePreferences } from "../auth/updatePreferences.js";
+import { updateAvatar } from "../auth/updateAvatar.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import { uploadAvatar } from "../middleware/upload.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -21,6 +23,7 @@ router.post("/reset-password", resetPassword);
 router.put("/change-password", authMiddleware, changePassword);
 router.delete("/delete-account", authMiddleware, deleteAccount);
 router.put("/preferences", authMiddleware, updatePreferences);
+router.put("/avatar", authMiddleware, uploadAvatar, updateAvatar);
 
 router.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
   res.status(200).json({
