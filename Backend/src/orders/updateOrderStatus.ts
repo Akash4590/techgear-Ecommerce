@@ -1,20 +1,13 @@
 import type { Request, Response } from "express";
 import Order from "../models/Order.js";
-import { getIO } from "../config/socket.js";
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "../config/mailer.js";
 
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = [
-      "pending",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-    ];
-
+    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -22,10 +15,9 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       });
     }
 
-    const order = await Order.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
+    const order = await Order.findByIdAndUpdate(id, { status }, { new: true }).populate(
+      "user",
+      "name email"
     );
 
     if (!order) {
@@ -34,17 +26,25 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         message: "Order not found",
       });
     }
-    const io = getIO();
-    io.to(`user:${order.user.toString()}`).emit("order-status-updated", {
-      orderId: order._id.toString(),
-      status: order.status,
-      updatedAt: order.updatedAt,
-    });
-    io.to("admins").emit("admin-order-status-updated", {
-      orderId: order._id.toString(),
-      status: order.status,
-      updatedAt: order.updatedAt,
-    });
+
+    // Email trigger — status ke hisaab se customer ko notify karna
+    const customer = order.user as unknown as { name: string; email: string };
+
+    console.log("Status update:", status, "| Customer email:", customer?.email);
+
+    try {
+      if (status === "shipped" && customer?.email) {
+        await sendOrderShippedEmail(customer.email, customer.name, order.id);
+        console.log("Shipped email sent to:", customer.email);
+      }
+
+      if (status === "delivered" && customer?.email) {
+        await sendOrderDeliveredEmail(customer.email, customer.name, order.id, order.items);
+        console.log("Delivered email sent to:", customer.email);
+      }
+    } catch (emailError) {
+      console.error("Failed to send order status email:", emailError);
+    }
 
     res.status(200).json({
       success: true,

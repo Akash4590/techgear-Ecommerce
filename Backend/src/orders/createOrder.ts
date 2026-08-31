@@ -1,7 +1,10 @@
 import type { Response } from "express";
 import Order from "../models/Order.js";
 import Product from "../models/product.js";
+import User from "../models/user.js";
+import { sendOrderConfirmationEmail } from "../config/mailer.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
+
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { items, totalAmount, shippingAddress, paymentMethod } = req.body;
@@ -19,6 +22,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         message: "Shipping address is required",
       });
     }
+
     for (const item of items) {
       const product = await Product.findById(item.productId);
 
@@ -36,6 +40,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         });
       }
     }
+
     const order = await Order.create({
       user: req.userId,
       items,
@@ -43,6 +48,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       shippingAddress,
       paymentMethod: paymentMethod || "Cash on Delivery",
     });
+
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (product) {
@@ -50,6 +56,18 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         product.inStock = product.stockQuantity > 0;
         await product.save();
       }
+    }
+
+    // Order confirmation email — user ke account se email/naam nikal ke bhejte hain
+    // (shippingAddress mein email field nahi hai, isliye account email use karte hain)
+    try {
+      const user = await User.findById(req.userId);
+      if (user?.email) {
+        await sendOrderConfirmationEmail(user.email, user.name, order.id, totalAmount, items);
+      }
+    } catch (emailError) {
+      // Email fail hone se order creation fail nahi hona chahiye — sirf log karo
+      console.error("Failed to send order confirmation email:", emailError);
     }
 
     res.status(201).json({

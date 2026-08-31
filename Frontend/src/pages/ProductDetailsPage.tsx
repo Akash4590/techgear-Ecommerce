@@ -146,7 +146,29 @@ const ProductDetailsPage = () => {
           <ProductInfo product={product} />
         </div>
        <FeatureBar/>
-       <ProductTabs product={product} />
+       <ProductTabs
+  product={product}
+  onReviewAdded={() => {
+    
+    if (id) {
+      fetch(`${API_BASE_URL}/products/${id}`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.data) {
+            setProduct((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    rating: result.data.rating,
+                    reviewsCount: result.data.reviewCount,
+                  }
+                : prev
+            );
+          }
+        });
+    }
+  }}
+/>
        <RelatedProducts currentProduct={product} />
        <AIAssistantBanner/>
       </div>

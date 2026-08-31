@@ -10,14 +10,10 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-
-    // Create HTTP server from Express app
     const server = http.createServer(app);
 
-    // Initialize Socket.IO
     initializeSocket(server);
 
-    // Start HTTP + Socket.IO server
     server.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log("Socket.IO initialized");

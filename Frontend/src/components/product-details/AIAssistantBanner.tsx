@@ -23,7 +23,7 @@ const AIAssistantBanner: React.FC = () => {
       </div>
 
       <Link
-        to="/ai-assistant"
+        to="/ai-agent"
         className="flex items-center gap-2 rounded-lg bg-[#4F46E5] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4338CA] transition-colors whitespace-nowrap"
       >
         <Sparkles size={16} />

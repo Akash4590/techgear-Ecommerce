@@ -4,7 +4,6 @@ import {
   Package,
   ShoppingCart,
   Percent,
-  Settings,
   LogOut,
   X,
 } from "lucide-react";
@@ -15,7 +14,6 @@ const navItems = [
   { label: "Products", icon: Package, path: "/admin/products" },
   { label: "Orders", icon: ShoppingCart, path: "/admin/orders" },
   { label: "Deals", icon: Percent, path: "/admin/deals" },
-  { label: "Settings", icon: Settings, path: "/admin/settings" },
 ];
 
 interface AdminSidebarProps {
@@ -28,7 +26,6 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
 
   return (
     <>
-      {/* Mobile backdrop — tap karke sidebar band ho */}
       {isOpen && (
         <div
           onClick={onClose}
@@ -51,8 +48,6 @@ const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               <p className="text-[11px] font-medium text-indigo-300">Admin Panel</p>
             </div>
           </div>
-
-          {/* Close button — sirf mobile pe */}
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white lg:hidden"

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Check, FileText } from "lucide-react";
 import type { Product } from "../../types/product";
+import ReviewsSection from "./ReviewsSection";
 
 interface ProductTabsProps {
   product: Product;
+  onReviewAdded?: () => void; 
 }
 
 type TabId = "description" | "specifications" | "reviews" | "shipping";
@@ -15,7 +17,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: "shipping", label: "Shipping & Returns" },
 ];
 
-const ProductTabs: React.FC<ProductTabsProps> = ({ product }) => {
+const ProductTabs: React.FC<ProductTabsProps> = ({ product, onReviewAdded }) => {
   const [activeTab, setActiveTab] = useState<TabId>("description");
 
   return (
@@ -118,17 +120,9 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ product }) => {
           </div>
         )}
 
+        {/* Naya: reviews tab ab real ReviewsSection component use karta hai */}
         {activeTab === "reviews" && (
-          <div className="max-w-2xl">
-            <p className="text-sm text-gray-500">
-              This product has an average rating of{" "}
-              <span className="font-semibold text-[#0B0B14]">{product.rating.toFixed(1)}</span> based
-              on <span className="font-semibold text-[#0B0B14]">{product.reviewsCount}</span> reviews.
-            </p>
-            <p className="text-sm text-gray-400 italic mt-3">
-              Individual review details are not available yet.
-            </p>
-          </div>
+          <ReviewsSection product={product} onReviewAdded={onReviewAdded} />
         )}
 
         {activeTab === "shipping" && (
