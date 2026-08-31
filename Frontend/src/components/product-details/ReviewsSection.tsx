@@ -24,6 +24,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ product, onReviewAdded 
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false); // Naya
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
@@ -45,7 +46,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ product, onReviewAdded 
     }
   };
 
-  // Check karo user already review de chuka hai
+  // Check karo user already review de chuka hai aur product purchase kiya hai ya nahi
   const checkReviewStatus = async () => {
     if (!isAuthenticated || !token) {
       setCheckingReviewStatus(false);
@@ -57,7 +58,10 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ product, onReviewAdded 
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success) setHasReviewed(data.data.hasReviewed);
+      if (data.success) {
+        setHasReviewed(data.data.hasReviewed);
+        setHasPurchased(data.data.hasPurchased); // Naya
+      }
     } finally {
       setCheckingReviewStatus(false);
     }
@@ -131,6 +135,11 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ product, onReviewAdded 
           {hasReviewed ? (
             <p className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5">
               You've already reviewed this product. Thank you!
+            </p>
+          ) : !hasPurchased ? (
+            // Naya: agar purchase nahi kiya, review form ki jagah ye message dikhao
+            <p className="text-sm text-gray-500 bg-[#F8F9FC] border border-gray-200 rounded-lg px-4 py-2.5">
+              Only customers who purchased this product can leave a review.
             </p>
           ) : showForm ? (
             <form onSubmit={handleSubmitReview} className="border border-gray-200 rounded-xl p-5">

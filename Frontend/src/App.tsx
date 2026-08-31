@@ -23,6 +23,7 @@ import AdminProductsPage from "./pages/AdminProductsPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
 import AdminDealsPage from "./pages/AdminDealsPage";
 import AIAgentPage from "./pages/AIChatPage";
+import AdminReviewsPage from "./pages/AdminReviewsPage";
 import AIAssistantButton from "./components/AIAssistantButton";
 const App = () => {
   return (
@@ -50,6 +51,7 @@ const App = () => {
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="deals" element={<AdminDealsPage />} />
+        <Route path="reviews" element={<AdminReviewsPage />} />
       </Route>
     </Routes>
     <AIAssistantButton/>

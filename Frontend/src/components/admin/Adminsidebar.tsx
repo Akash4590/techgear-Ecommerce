@@ -7,12 +7,14 @@ import {
   LogOut,
   X,
 } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
   { label: "Products", icon: Package, path: "/admin/products" },
   { label: "Orders", icon: ShoppingCart, path: "/admin/orders" },
+  { label: "Reviews", icon: MessageSquare, path: "/admin/reviews" },
   { label: "Deals", icon: Percent, path: "/admin/deals" },
 ];
 

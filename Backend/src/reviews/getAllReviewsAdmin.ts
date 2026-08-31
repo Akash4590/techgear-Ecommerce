@@ -1,12 +1,14 @@
 import type { Request, Response } from "express";
 import Review from "../models/Review.js";
 
-export const getProductReviews = async (req: Request, res: Response) => {
+export const getAllReviewsAdmin = async (req: Request, res: Response) => {
   try {
-    const { productId } = req.params;
+    const status = req.query.status as string | undefined;
+    const filter = status && status !== "all" ? { status } : {};
 
-    const reviews = await Review.find({ product: productId, status: "approved" })
-      .populate("user", "name")
+    const reviews = await Review.find(filter)
+      .populate("user", "name email")
+      .populate("product", "name image")
       .sort({ createdAt: -1 });
 
     res.status(200).json({

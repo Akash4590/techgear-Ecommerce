@@ -1,6 +1,7 @@
 import type { Response } from "express";
 import Review from "../models/Review.js";
 import Product from "../models/product.js";
+import Order from "../models/Order.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
 
 export const createReview = async (req: AuthRequest, res: Response) => {
@@ -21,12 +22,24 @@ export const createReview = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Check karo product exist karta hai
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
+      });
+    }
+
+    // Naya: check karo user ne is product ko kabhi order kiya hai (kisi bhi status mein)
+    const qualifyingOrder = await Order.findOne({
+      user: req.userId,
+      "items.productId": productId,
+    }).sort({ createdAt: -1 });
+
+    if (!qualifyingOrder) {
+      return res.status(403).json({
+        success: false,
+        message: "Only customers who purchased this product can leave a review",
       });
     }
 
@@ -39,21 +52,23 @@ export const createReview = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Review banao
     const review = await Review.create({
       product: productId,
       user: req.userId,
+      order: qualifyingOrder._id,
       rating,
       comment,
     });
 
-    // Naya: product ki average rating aur reviewCount recalculate karo
-    const allReviews = await Review.find({ product: productId });
+    // Sirf "approved" reviews rating calculation mein count hon
+    const approvedReviews = await Review.find({ product: productId, status: "approved" });
     const avgRating =
-      allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+      approvedReviews.length > 0
+        ? approvedReviews.reduce((sum, r) => sum + r.rating, 0) / approvedReviews.length
+        : 0;
 
-    product.rating = Math.round(avgRating * 10) / 10; // 1 decimal tak round
-    product.reviewCount = allReviews.length;
+    product.rating = Math.round(avgRating * 10) / 10;
+    product.reviewCount = approvedReviews.length;
     await product.save();
 
     const populatedReview = await review.populate("user", "name");
