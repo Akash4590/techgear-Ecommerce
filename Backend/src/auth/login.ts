@@ -14,9 +14,42 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    
     const normalizedEmail = email.trim().toLowerCase();
 
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET is not defined in .env file");
+    }
+
+    // ✅ Admin Login (from .env, bypasses DB and verification)
+    if (normalizedEmail === process.env.ADMIN_EMAIL?.toLowerCase()) {
+      if (password !== process.env.ADMIN_PASSWORD) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid email or password",
+        });
+      }
+
+      const token = jwt.sign(
+        { email: normalizedEmail, role: "admin" },
+        jwtSecret,
+        { expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"] }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        data: {
+          token,
+          user: {
+            email: normalizedEmail,
+            role: "admin",
+          },
+        },
+      });
+    }
+
+    // ✅ Normal User Login
     const user = await User.findOne({ email: normalizedEmail });
     if (!user || user.isDeleted) {
       return res.status(401).json({
@@ -33,9 +66,11 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new Error("JWT_SECRET is not defined in .env file");
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email before logging in",
+      });
     }
 
     const token = jwt.sign(

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   User,
   Mail,
@@ -10,6 +10,7 @@ import {
   Truck,
   Award,
   Headphones,
+  MailCheck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
@@ -55,6 +56,15 @@ const SignUpPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ---- OTP step state ----
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+  const [otpError, setOtpError] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
+  const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -90,12 +100,100 @@ const SignUpPage = () => {
         return;
       }
 
-      
-      navigate("/login");
+      // Move to OTP verification step instead of navigating away
+      setStep("otp");
     } catch (err) {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^[0-9]?$/.test(value)) return; // only allow single digit
+    const next = [...otp];
+    next[index] = value;
+    setOtp(next);
+
+    if (value && index < 5) {
+      otpInputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpInputsRef.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text").trim();
+    if (/^\d{6}$/.test(pasted)) {
+      e.preventDefault();
+      setOtp(pasted.split(""));
+      otpInputsRef.current[5]?.focus();
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError("");
+    setResendMsg("");
+
+    const code = otp.join("");
+    if (code.length !== 6) {
+      setOtpError("Please enter the full 6-digit code.");
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setOtpError(data.message || "Invalid code. Please try again.");
+        return;
+      }
+
+      navigate("/login");
+    } catch (err) {
+      setOtpError("Something went wrong. Please try again.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendMsg("");
+    setOtpError("");
+    setResending(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: fullName, email, password }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setOtpError(data.message || "Could not resend code.");
+        return;
+      }
+      setOtp(["", "", "", "", "", ""]);
+      otpInputsRef.current[0]?.focus();
+      setResendMsg("A new code has been sent to your email.");
+    } catch (err) {
+      setOtpError("Something went wrong while resending the code.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -122,180 +220,288 @@ const SignUpPage = () => {
               </span>
             </Link>
 
-            <h1 className="text-3xl font-bold text-[#0B0B14] mb-2">
-              Create your account
-            </h1>
-            <p className="text-sm text-gray-500 mb-8">
-              Join TechGear and enjoy the best technology at your fingertips.
-            </p>
-
-            {error && (
-              <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-600">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-4 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-4 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a password"
-                    className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-11 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                <p className="mt-1.5 text-xs text-gray-400">
-                  Use at least 6 characters with a mix of letters, numbers &
-                  symbols.
+            {step === "form" ? (
+              <>
+                <h1 className="text-3xl font-bold text-[#0B0B14] mb-2">
+                  Create your account
+                </h1>
+                <p className="text-sm text-gray-500 mb-8">
+                  Join TechGear and enjoy the best technology at your
+                  fingertips.
                 </p>
-              </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
-                    className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-11 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
-                  />
+                {error && (
+                  <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-600">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Enter your full name"
+                        className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-4 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email address"
+                        className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-4 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Create a password"
+                        className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-11 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-xs text-gray-400">
+                      Use at least 6 characters with a mix of letters, numbers
+                      &amp; symbols.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-[#0B0B14] mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <Lock
+                        size={18}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm your password"
+                        className="w-full rounded-lg border border-gray-200 py-3 pl-11 pr-11 text-sm text-[#0B0B14] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword((prev) => !prev)
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <label className="flex items-start gap-2.5 text-sm text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={agreed}
+                      onChange={(e) => setAgreed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#4F46E5] focus:ring-[#4F46E5]/30"
+                    />
+                    <span>
+                      I agree to the{" "}
+                      <Link
+                        to="/terms"
+                        className="text-[#4F46E5] font-medium hover:underline"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        to="/privacy"
+                        className="text-[#4F46E5] font-medium hover:underline"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#4F46E5] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Creating account..." : "Create Account"}
+                    {!loading && <ArrowRight size={16} />}
+                  </button>
+                </form>
+
+                <div className="my-6 flex items-center gap-4">
+                  <div className="h-px flex-1 bg-gray-200" />
+                  <span className="text-xs text-gray-400">
+                    or continue with
+                  </span>
+                  <div className="h-px flex-1 bg-gray-200" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
-                    }
+                    className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 py-3 text-sm font-medium text-[#0B0B14] hover:border-gray-300 transition-colors"
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
+                    <GoogleIcon />
+                    Google
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 py-3 text-sm font-medium text-[#0B0B14] hover:border-gray-300 transition-colors"
+                  >
+                    <AppleIcon />
+                    Apple
                   </button>
                 </div>
-              </div>
 
-              <label className="flex items-start gap-2.5 text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#4F46E5] focus:ring-[#4F46E5]/30"
-                />
-                <span>
-                  I agree to the{" "}
-                  <Link to="/terms" className="text-[#4F46E5] font-medium hover:underline">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link to="/privacy" className="text-[#4F46E5] font-medium hover:underline">
-                    Privacy Policy
+                <p className="mt-8 text-center text-sm text-gray-500">
+                  Already have an account?{" "}
+                  <Link
+                    to="/login"
+                    className="text-[#4F46E5] font-semibold hover:underline"
+                  >
+                    Sign in
                   </Link>
-                </span>
-              </label>
+                </p>
+              </>
+            ) : (
+              <>
+                {/* ---- OTP Verification Step ---- */}
+                <div className="mb-8">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-[#4F46E5]">
+                    <MailCheck size={22} />
+                  </div>
+                  <h1 className="text-3xl font-bold text-[#0B0B14] mb-2">
+                    Verify your email
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    We've sent a 6-digit code to{" "}
+                    <span className="font-semibold text-[#0B0B14]">
+                      {email}
+                    </span>
+                    . Enter it below to activate your account.
+                  </p>
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#4F46E5] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? "Creating account..." : "Create Account"}
-                {!loading && <ArrowRight size={16} />}
-              </button>
-            </form>
+                {otpError && (
+                  <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-600">
+                    {otpError}
+                  </div>
+                )}
+                {resendMsg && (
+                  <div className="mb-5 rounded-lg bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-600">
+                    {resendMsg}
+                  </div>
+                )}
 
-            <div className="my-6 flex items-center gap-4">
-              <div className="h-px flex-1 bg-gray-200" />
-              <span className="text-xs text-gray-400">or continue with</span>
-              <div className="h-px flex-1 bg-gray-200" />
-            </div>
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                  <div className="flex justify-between gap-2">
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(el) => {
+                          otpInputsRef.current[index] = el;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) =>
+                          handleOtpChange(index, e.target.value)
+                        }
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        onPaste={handleOtpPaste}
+                        className="h-14 w-12 rounded-lg border border-gray-200 text-center text-xl font-bold text-[#0B0B14] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 sm:w-14"
+                      />
+                    ))}
+                  </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 py-3 text-sm font-medium text-[#0B0B14] hover:border-gray-300 transition-colors"
-              >
-                <GoogleIcon />
-                Google
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 py-3 text-sm font-medium text-[#0B0B14] hover:border-gray-300 transition-colors"
-              >
-                <AppleIcon />
-                Apple
-              </button>
-            </div>
+                  <button
+                    type="submit"
+                    disabled={verifying}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#4F46E5] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {verifying ? "Verifying..." : "Verify & Continue"}
+                    {!verifying && <ArrowRight size={16} />}
+                  </button>
+                </form>
 
-            <p className="mt-8 text-center text-sm text-gray-500">
-              Already have an account?{" "}
-              <Link to="/login" className="text-[#4F46E5] font-semibold hover:underline">
-                Sign in
-              </Link>
-            </p>
+                <p className="mt-6 text-center text-sm text-gray-500">
+                  Didn't receive the code?{" "}
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resending}
+                    className="text-[#4F46E5] font-semibold hover:underline disabled:opacity-60"
+                  >
+                    {resending ? "Resending..." : "Resend code"}
+                  </button>
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => setStep("form")}
+                  className="mt-4 w-full text-center text-xs text-gray-400 hover:text-gray-600"
+                >
+                  ← Back to sign up
+                </button>
+              </>
+            )}
           </div>
 
           {/* Right: Illustration */}

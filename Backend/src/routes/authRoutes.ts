@@ -11,7 +11,7 @@ import { updateAvatar } from "../auth/updateAvatar.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { uploadAvatar } from "../middleware/upload.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
-
+import { verifyOTP } from "../auth/verifyOtp.js"; 
 const router = Router();
 
 router.post("/signup", signup);
@@ -24,7 +24,7 @@ router.put("/change-password", authMiddleware, changePassword);
 router.delete("/delete-account", authMiddleware, deleteAccount);
 router.put("/preferences", authMiddleware, updatePreferences);
 router.put("/avatar", authMiddleware, uploadAvatar, updateAvatar);
-
+router.post("/verify-otp", verifyOTP); 
 router.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
   res.status(200).json({
     success: true,

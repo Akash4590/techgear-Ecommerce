@@ -6,7 +6,7 @@ const AIAssistantButton = () => {
   return (
     <Link
       to="/ai-agent"
-      className="fixed bottom-6 right-6 z-[100] group"
+      className="fixed bottom-32 right-10 z-[100] group"
       aria-label="Open AI Assistant"
     >
       <div className="relative">
@@ -25,7 +25,7 @@ const AIAssistantButton = () => {
         </div>
 
         {/* Small AI icon */}
-        <span className="absolute bottom-1 left-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#4F46E5] text-white shadow">
+        <span className="absolute bottom-1 left-5 flex h-5 w-5 items-center justify-center rounded-full bg-[#4F46E5] text-white shadow">
           <Sparkles size={11} />
         </span>
       </div>

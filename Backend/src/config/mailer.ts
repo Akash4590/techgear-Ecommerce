@@ -152,6 +152,48 @@ const renderItemsTable = (items: EmailOrderItem[]) => `
 `;
 
 // ============================================================
+// OTP Email Verification
+// ============================================================
+export const sendOTPEmail = async (to: string, otp: string) => {
+  const html = renderEmailShell({
+    previewText: `Your TechGear verification code is ${otp}`,
+    bannerLabel: "Email Verification",
+    bannerColor: BRAND_COLOR,
+    bodyHtml: `
+      <h1 style="margin:0 0 12px 0; color:${TEXT_DARK}; font-size:20px; font-weight:700;">
+        Verify your email address
+      </h1>
+      <p style="margin:0 0 20px 0; color:${TEXT_MUTED}; font-size:14px; line-height:1.6;">
+        Thanks for signing up with TechGear! Use the verification code below to
+        complete your registration. This code will expire in 10 minutes.
+      </p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0;">
+        <tr>
+          <td align="center" style="background-color:${BG_LIGHT}; border: 1px solid ${BORDER_COLOR}; border-radius: 10px; padding: 20px;">
+            <span style="color:${TEXT_DARK}; font-size:32px; font-weight:700; letter-spacing: 8px;">
+              ${otp}
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0; color:${TEXT_MUTED}; font-size:13px; line-height:1.6;">
+        If you didn't create an account with TechGear, you can safely ignore this
+        email.
+      </p>
+    `,
+  });
+
+  await transporter.sendMail({
+    from: `"TechGear" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Verify your TechGear account",
+    html,
+  });
+};
+
+// ============================================================
 // Password Reset
 // ============================================================
 export const sendResetPasswordEmail = async (to: string, resetUrl: string) => {

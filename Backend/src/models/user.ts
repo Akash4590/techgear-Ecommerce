@@ -13,6 +13,9 @@ export interface IUser extends Document {
   avatar?: string;
   isDeleted: boolean;
   deletedAt?: Date;
+  isVerified: boolean;
+  otp?: string;
+  otpExpiry?: Date;
   createdAt: Date;
 }
 
@@ -28,6 +31,9 @@ const userSchema = new Schema<IUser>(
     avatar: { type: String },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },
+    isVerified: { type: Boolean, default: false },
+    otp: { type: String },
+    otpExpiry: { type: Date },
   },
   { timestamps: true }
 );
