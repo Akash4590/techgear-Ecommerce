@@ -6,7 +6,7 @@ import { getAllReviewsAdmin } from "../reviews/getAllReviewsAdmin.js";
 import { updateReviewStatus } from "../reviews/updateReviewStatus.js";
 import { deleteReview } from "../reviews/deleteReview.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import { adminMiddleware } from "../middleware/Adminmiddleware.js";
+import { adminMiddleware } from "../middleware/adminMiddleware.js";
 
 const router = Router();
 

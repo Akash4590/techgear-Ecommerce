@@ -5,7 +5,7 @@ import { getAllOrders } from "../orders/getAllOrders.js";
 import { updateOrderStatus } from "../orders/updateOrderStatus.js";
 import { getDashboardStats } from "../orders/getDashboardStats.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import { adminMiddleware } from "../middleware/Adminmiddleware.js";
+import { adminMiddleware } from "../middleware/adminMiddleware.js";
 
 const router = Router();
 
