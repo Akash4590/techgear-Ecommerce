@@ -122,7 +122,7 @@ const OrdersContent = () => {
   const navigate = useNavigate();
 
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const [orders, setOrders] = useState<Order[]>(localOrders ?? []);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let isMounted = true;
