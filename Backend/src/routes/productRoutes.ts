@@ -6,7 +6,7 @@ import { deleteProduct } from "../products/deleteProduct.js";
 import { setProductDeal } from "../products/setProductDeal.js";
 import { getAllProductsAdmin } from "../products/getAllProductsAdmin.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import { adminMiddleware } from "../middleware/adminMiddleware.js";
+import { adminMiddleware } from "../middleware/Adminmiddleware.js";
 import { uploadProductImages } from "../middleware/upload.js";
 import { getDealProductsAdmin } from "../products/getDealProductsAdmin.js";
 
