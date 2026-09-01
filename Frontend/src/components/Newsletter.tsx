@@ -1,4 +1,5 @@
-import { useState, FormEvent } from "react";
+import { useState} from "react";
+import type { FormEvent } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ShieldCheck, Mail, Check, Sparkles, Tag, Gift, Rocket, Loader2 } from "lucide-react";
 
