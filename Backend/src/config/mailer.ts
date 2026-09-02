@@ -22,9 +22,6 @@ const TEXT_MUTED = "#6B7280";
 const BORDER_COLOR = "#E5E7EB";
 const BG_LIGHT = "#F3F4F6";
 
-// ============================================================
-// Shared branded wrapper — sab emails isi template ko use karte hain
-// ============================================================
 const renderEmailShell = (opts: {
   previewText: string;
   bannerLabel: string;
@@ -151,9 +148,6 @@ const renderItemsTable = (items: EmailOrderItem[]) => `
   </table>
 `;
 
-// ============================================================
-// OTP Email Verification
-// ============================================================
 export const sendOTPEmail = async (to: string, otp: string) => {
   const html = renderEmailShell({
     previewText: `Your TechGear verification code is ${otp}`,
@@ -193,9 +187,6 @@ export const sendOTPEmail = async (to: string, otp: string) => {
   });
 };
 
-// ============================================================
-// Password Reset
-// ============================================================
 export const sendResetPasswordEmail = async (to: string, resetUrl: string) => {
   const html = renderEmailShell({
     previewText: "Reset your TechGear account password",
@@ -225,10 +216,6 @@ export const sendResetPasswordEmail = async (to: string, resetUrl: string) => {
     html,
   });
 };
-
-// ============================================================
-// Order Confirmation
-// ============================================================
 export const sendOrderConfirmationEmail = async (
   to: string,
   customerName: string,
@@ -287,9 +274,6 @@ export const sendOrderConfirmationEmail = async (
   });
 };
 
-// ============================================================
-// Order Shipped
-// ============================================================
 export const sendOrderShippedEmail = async (
   to: string,
   customerName: string,
@@ -325,9 +309,6 @@ export const sendOrderShippedEmail = async (
   });
 };
 
-// ============================================================
-// Order Delivered
-// ============================================================
 export const sendOrderDeliveredEmail = async (
   to: string,
   customerName: string,
