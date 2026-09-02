@@ -1,15 +1,15 @@
-
 import { useState } from "react";
 import {
   Bot,
   Send,
   User,
-  Sparkles,
   ShoppingBag,
   Tag,
   PackageSearch,
   GitCompare,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { API_BASE_URL } from "../config/api";
@@ -35,6 +35,39 @@ interface ChatResponse {
 }
 
 const AI_AGENT_AVATAR = "/images/ai-agent-avatar.png";
+
+// Markdown ko chat bubble ke design system se match karne wale custom components
+const markdownComponents: Components = {
+  p: ({ children }) => (
+    <p className="mb-2 last:mb-0 leading-6">{children}</p>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-inherit">{children}</strong>
+  ),
+  em: ({ children }) => <em className="italic">{children}</em>,
+  ul: ({ children }) => (
+    <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>
+  ),
+  li: ({ children }) => <li className="leading-6">{children}</li>,
+  a: ({ children, href }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-[#4F46E5] underline underline-offset-2 hover:text-[#4338CA]"
+    >
+      {children}
+    </a>
+  ),
+  code: ({ children }) => (
+    <code className="rounded bg-black/5 px-1.5 py-0.5 text-[13px]">
+      {children}
+    </code>
+  ),
+};
 
 const AIChatPage = () => {
   const { authFetch, user } = useAuth();
@@ -140,7 +173,6 @@ const AIChatPage = () => {
       setLoading(false);
     }
   };
-
 
   const suggestions = [
     {
@@ -288,13 +320,19 @@ const AIChatPage = () => {
                 )}
 
                 <div
-                  className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${
+                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
                     item.role === "user"
-                      ? "rounded-br-md bg-[#4F46E5] text-white"
+                      ? "whitespace-pre-wrap rounded-br-md bg-[#4F46E5] text-white leading-6"
                       : "rounded-bl-md border border-gray-100 bg-white text-gray-700 shadow-sm"
                   }`}
                 >
-                  {item.content}
+                  {item.role === "assistant" ? (
+                    <ReactMarkdown components={markdownComponents}>
+                      {item.content}
+                    </ReactMarkdown>
+                  ) : (
+                    item.content
+                  )}
                 </div>
 
                 {item.role === "user" && (
@@ -387,4 +425,3 @@ const AIChatPage = () => {
 };
 
 export default AIChatPage;
-
